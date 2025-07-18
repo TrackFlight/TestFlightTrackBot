@@ -1,0 +1,4 @@
+[submodule "miniapp"]
+	path = miniapp
+	url = https://github.com/TrackFlight/MiniApp
+	branch = master

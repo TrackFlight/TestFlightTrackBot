@@ -1,0 +1,6 @@
+.idea
+.docker_build
+.env.sample
+*.yml
+package-lock.json
+node_modules

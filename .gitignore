@@ -1,0 +1,8 @@
+.idea
+.env
+.docker_build
+go.sum
+*_gen.go
+package-lock.json
+node_modules
+*.pem

@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "${DB_USER}", "-d", "${DB_NAME}" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  bot:
+    build: .
+    container_name: bot
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: db
+      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
+      LIMIT_FREE: ${LIMIT_FREE}
+      LIMIT_PREMIUM: ${LIMIT_PREMIUM}
+      PUBLIC_LINK_MIN_USERS: ${PUBLIC_LINK_MIN_USERS}
+      ADMIN_USER_ID: ${ADMIN_USER_ID}
+
+volumes:
+  pg_data:

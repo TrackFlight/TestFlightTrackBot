@@ -1,0 +1,28 @@
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile-dev
+    volumes:
+      - .:/app
+
+  mini-app-dev:
+    image: node:24-alpine3.22
+    container_name: mini-app-dev
+    working_dir: /app
+    volumes:
+      - ./miniapp:/app
+    command: sh -c "npm install --force && npm run dev"
+    environment:
+      - NODE_ENV=development
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: tunnel
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
