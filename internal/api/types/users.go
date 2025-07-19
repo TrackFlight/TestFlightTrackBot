@@ -9,3 +9,8 @@ type Link struct {
 	Status           string `json:"status"`
 	LastAvailability int64  `json:"last_availability"`
 }
+
+type NewLink struct {
+	ID   uint   `json:"id"`
+	Link string `json:"link"`
+}

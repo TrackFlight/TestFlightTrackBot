@@ -11,14 +11,6 @@ type linkStore struct {
 	cfg *config.Config
 }
 
-func (ctx *linkStore) Add(url string) (uint, error) {
-	link := models.Link{
-		URL: url,
-	}
-	err := ctx.db.FirstOrCreate(&link, `url = ?`, url).Error
-	return link.ID, err
-}
-
 func (ctx *linkStore) FindByURL(url string) (models.Link, error) {
 	var link models.Link
 	err := ctx.db.First(&link, "url = ?", url).Error

@@ -5,6 +5,7 @@ const (
 	ErrUnauthorized   = "UNAUTHORIZED"
 	ErrBadRequest     = "BAD_REQUEST"
 	ErrInternalServer = "INTERNAL_SERVER_ERROR"
+	ErrAlreadyExists  = "ALREADY_EXISTS"
 )
 
 type ErrorResponse struct {

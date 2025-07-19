@@ -27,13 +27,55 @@ func (ctx *chatLinkStore) GetLanguage(chatID int64, languageHint string) string 
 	return chat.Lang
 }
 
-func (ctx *chatLinkStore) Track(chatID int64, linkId uint) (bool, error) {
-	var chatLink models.ChatLink
-	result := ctx.db.FirstOrCreate(&chatLink, &models.ChatLink{
-		ChatID: chatID,
-		LinkID: linkId,
-	})
-	return result.RowsAffected > 0 && result.Error == nil, result.Error
+func (ctx *chatLinkStore) Track(chatID int64, linkId uint, linkURL string) (*models.TrackingLink, error) {
+	var trackedLink models.TrackingLink
+	err := ctx.db.Raw(`
+		WITH existing_link AS (
+			SELECT id, app_id, status, last_availability
+			FROM links
+			WHERE url = ? OR id = ?
+			LIMIT 1
+		),
+		inserted_link AS (
+			INSERT INTO links (url, created_at, updated_at)
+			SELECT ?, NOW(), NOW()
+			WHERE NOT EXISTS (SELECT 1 FROM existing_link)
+			RETURNING id
+		),
+		final_link AS (
+			SELECT id FROM inserted_link
+			UNION ALL
+			SELECT id FROM existing_link
+		),
+		tracking AS (
+			SELECT COUNT(*) AS links_count
+			FROM chat_links cl
+			JOIN links l ON l.id = cl.link_id
+			WHERE cl.chat_id = ?
+		),
+		inserted_tracking AS (
+			INSERT INTO chat_links (chat_id, link_id, allow_opened, created_at, updated_at)
+			VALUES (
+				?,
+				(SELECT id FROM final_link),
+				(SELECT links_count FROM tracking) < 2,
+				NOW(),
+				NOW()
+			)
+            ON CONFLICT (chat_id, link_id) DO NOTHING
+			RETURNING link_id
+		)
+		SELECT inserted_tracking.link_id AS id, apps.app_name, apps.icon_url, apps.description, existing_link.status, existing_link.last_availability FROM inserted_tracking
+		LEFT JOIN existing_link ON existing_link.id = inserted_tracking.link_id
+		LEFT JOIN apps ON apps.id = existing_link.app_id;
+	`, linkURL, linkId, linkURL, chatID, chatID).Scan(&trackedLink).Error
+	if err != nil {
+		return nil, err
+	}
+	if trackedLink.ID == 0 {
+		return nil, nil
+	}
+	return &trackedLink, nil
 }
 
 func (ctx *chatLinkStore) TrackedList(chatID int64) ([]models.TrackingLink, error) {
