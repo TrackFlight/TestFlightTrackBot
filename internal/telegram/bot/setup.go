@@ -5,8 +5,6 @@ import (
 	"github.com/Laky-64/TestFlightTrackBot/internal/telegram"
 	"github.com/Laky-64/TestFlightTrackBot/internal/telegram/handlers"
 	"github.com/Laky-64/TestFlightTrackBot/internal/telegram/handlers/admin"
-	"github.com/Laky-64/TestFlightTrackBot/internal/telegram/handlers/tracking"
-	"github.com/Laky-64/TestFlightTrackBot/internal/translator"
 )
 
 func (b *Bot) setupHandlers() {
@@ -35,38 +33,5 @@ func (b *Bot) setupHandlers() {
 		"search_var",
 		admin.SearchVar,
 		filters.Private(),
-	)
-
-	// Tracking commands
-	b.OnTextCommand(
-		translator.StartTrackingBtn,
-		b.IfElse(
-			tracking.Start,
-			tracking.SendLimitReachedMessage,
-			b.HasReachedLimit(),
-		),
-	)
-	b.OnCommand(
-		"cancel",
-		tracking.Cancel,
-	)
-	b.OnMessage(
-		b.IfElse(
-			tracking.TrackLink,
-			tracking.SendLimitReachedMessage,
-			b.HasReachedLimit(),
-		),
-		IsTestFlightLink(),
-	)
-	b.OnMessage(
-		tracking.SearchLink,
-		filters.Not(
-			filters.Or(
-				IsCommand(),
-				IsTestFlightLink(),
-				IsTextCommand(),
-			),
-		),
-		b.IsPending(),
 	)
 }

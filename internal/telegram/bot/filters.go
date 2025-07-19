@@ -132,25 +132,3 @@ func (b *Bot) IfElse(handler, handlerElse func(*core.UpdateContext, types.Messag
 		return handler(ctx, message)
 	}
 }
-
-func (b *Bot) IsPending() filters.FilterOperand {
-	return func(values *filters.DataFilter) bool {
-		if b.db.PendingStore.Exists(values.Chat.ID) {
-			return true
-		}
-		return false
-	}
-}
-
-func (b *Bot) HasReachedLimit() filters.FilterOperand {
-	return func(values *filters.DataFilter) bool {
-		count, err := b.db.ChatLinkStore.TrackedCount(values.Chat.ID)
-		if err != nil {
-			return false
-		}
-		if count >= b.cfg.LimitFree {
-			return true
-		}
-		return false
-	}
-}

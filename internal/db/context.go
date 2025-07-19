@@ -8,13 +8,11 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"sync"
 )
 
 type DB struct {
 	AppStore      *appStore
 	LinkStore     *linkStore
-	PendingStore  *pendingStore
 	ChatLinkStore *chatLinkStore
 }
 
@@ -51,26 +49,15 @@ func NewDB(cfg *config.Config) (*DB, error) {
 		&models.App{},
 		&models.Link{},
 		&models.ChatLink{},
-		&models.PendingTrack{},
 		&models.PremiumUser{},
 		&models.TranslatorLanguage{},
 	); err != nil {
 		return nil, err
 	}
 
-	pending := &pendingStore{
-		db:              db,
-		pendingTracking: sync.Map{},
-	}
-
-	if err = pending.LoadFromDB(); err != nil {
-		return nil, err
-	}
-
 	return &DB{
 		AppStore:      &appStore{db: db},
 		LinkStore:     &linkStore{db: db, cfg: cfg},
-		PendingStore:  pending,
 		ChatLinkStore: &chatLinkStore{db: db, cfg: cfg},
 	}, nil
 }
