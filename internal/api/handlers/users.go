@@ -96,6 +96,7 @@ func AddLink(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 			return
 		} else {
 			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
 			var timestamp int64
 			if following.LastAvailability != nil {
 				timestamp = following.LastAvailability.UTC().Unix()
@@ -109,7 +110,6 @@ func AddLink(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 				Status:           string(following.Status),
 				LastAvailability: timestamp,
 			})
-			w.WriteHeader(http.StatusCreated)
 		}
 	}
 }
