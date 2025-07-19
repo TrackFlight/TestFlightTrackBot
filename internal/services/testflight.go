@@ -37,7 +37,7 @@ func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.B
 
 			var updates []models.LinkUpdate
 			newApps := make(map[string]*models.AppUpsert)
-			var requestNotifications []models.NotificationUpdate
+			var requestNotifications []models.NotificationRequest
 			var removeLinks []uint
 			for _, link := range usedLinks {
 				checked := checkedLinks[link.URL]
@@ -61,7 +61,7 @@ func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.B
 						AppName: checked.AppName,
 						Status:  checked.Status,
 					})
-					requestNotifications = append(requestNotifications, models.NotificationUpdate{
+					requestNotifications = append(requestNotifications, models.NotificationRequest{
 						LinkID: link.ID,
 						Status: checked.Status,
 					})

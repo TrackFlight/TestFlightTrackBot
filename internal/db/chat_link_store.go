@@ -115,8 +115,8 @@ func (ctx *chatLinkStore) TrackedCount(chatID int64) (int, error) {
 	return int(count), nil
 }
 
-func (ctx *chatLinkStore) BulkUpdateNotifications(updates []models.NotificationUpdate) ([]models.NotifiedChat, error) {
-	var notifiedChats []models.NotifiedChat
+func (ctx *chatLinkStore) BulkUpdateNotifications(updates []models.NotificationRequest) ([]models.NotificationChat, error) {
+	var notifiedChats []models.NotificationChat
 	var ids []uint
 	var statuses []models.LinkStatus
 	for _, u := range updates {

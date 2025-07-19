@@ -67,8 +67,8 @@ func (ctx *linkStore) BulkUpdate(updates []models.LinkUpdate) error {
 	)
 }
 
-func (ctx *linkStore) BulkDelete(ids []uint) ([]models.NotifiedDeleteChat, error) {
-	var notifiedDeleteChats []models.NotifiedDeleteChat
+func (ctx *linkStore) BulkDelete(ids []uint) ([]models.BaseNotificationChat, error) {
+	var notifiedDeleteChats []models.BaseNotificationChat
 	err := bulkRaw(
 		ctx.db,
 		`
