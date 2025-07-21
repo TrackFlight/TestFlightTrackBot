@@ -105,7 +105,7 @@ func AntiFlood(maxHits int, timeWindow, initialPenalty, maxPenalty, penaltyDecay
 				penaltyDecayWindow,
 			)
 			if !allowed {
-				utils.JSONErrorFloodwait(w, int(math.Ceil(wait.Seconds())))
+				utils.JSONErrorFloodWait(w, int(math.Ceil(wait.Seconds())))
 				return
 			}
 			next.ServeHTTP(w, r)

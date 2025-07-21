@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func JSONErrorFloodwait(w http.ResponseWriter, seconds int) {
+func JSONErrorFloodWait(w http.ResponseWriter, seconds int) {
 	rawJSONError(w, types.ErrFloodWait, fmt.Sprintf("A wait of %d seconds is required", seconds), http.StatusTooManyRequests, seconds)
 }
 
