@@ -31,18 +31,30 @@ ORDER BY a.l_value, la.followers DESC;
 -- name: BulkUpsert :exec
 WITH input_data AS (
     SELECT
-        UNNEST(@app_ids::bigint[]) AS app_id,
-        UNNEST(@app_names::text[]) AS app_name,
-        UNNEST(@icon_urls::text[]) AS icon_url,
+        UNNEST(@app_ids::bigint[])    AS app_id,
+        UNNEST(@app_names::text[])    AS app_name,
+        UNNEST(@icon_urls::text[])    AS icon_url,
         UNNEST(@descriptions::text[]) AS description
+),
+updated AS (
+    UPDATE apps AS a
+    SET
+        app_name    = i.app_name,
+        icon_url    = i.icon_url,
+        description = i.description,
+        updated_at  = NOW()
+    FROM input_data AS i
+    WHERE a.app_name = i.app_name OR a.id = i.app_id
+    RETURNING a.id, a.app_name
 )
-INSERT INTO apps (id, app_name, icon_url, description)
+INSERT INTO apps (app_name, icon_url, description)
 SELECT
-    app_id, app_name, icon_url, description
-FROM input_data
-ON CONFLICT (app_name)
-DO UPDATE SET
-    app_name     = EXCLUDED.app_name,
-    icon_url     = EXCLUDED.icon_url,
-    description  = EXCLUDED.description,
-    updated_at   = NOW();
+    i.app_name,
+    i.icon_url,
+    i.description
+FROM input_data as i
+WHERE NOT EXISTS (
+    SELECT 1 FROM updated
+    WHERE updated.id = i.app_id
+    OR updated.app_name = i.app_name
+);
