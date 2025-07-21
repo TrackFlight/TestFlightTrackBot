@@ -33,7 +33,6 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: db
       TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
       LIMIT_FREE: ${LIMIT_FREE}
       LIMIT_PREMIUM: ${LIMIT_PREMIUM}

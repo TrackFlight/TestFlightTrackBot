@@ -9,7 +9,6 @@ import (
 func Load() (*Config, error) {
 	cfg := &Config{
 		AdminID:       int64(getEnvInt("ADMIN_USER_ID", 0)),
-		DBHost:        os.Getenv("DB_HOST"),
 		DBUser:        os.Getenv("DB_USER"),
 		DBPassword:    os.Getenv("DB_PASSWORD"),
 		DBName:        os.Getenv("DB_NAME"),
@@ -20,9 +19,6 @@ func Load() (*Config, error) {
 		PublicLinkMinUsers: getEnvInt("PUBLIC_LINK_MIN_USERS", 20),
 	}
 
-	if len(cfg.DBHost) == 0 {
-		return nil, errors.New("DB_HOST environment variable not set")
-	}
 	if len(cfg.DBUser) == 0 {
 		return nil, errors.New("DB_USER environment variable not set")
 	}

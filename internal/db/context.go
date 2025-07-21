@@ -14,8 +14,7 @@ import (
 
 func NewDB(cfg *config.Config) (*DB, error) {
 	dsn := fmt.Sprintf(
-		"host=%s port=5432 user=%s password=%s dbname=%s sslmode=disable TimeZone=UTC",
-		cfg.DBHost,
+		"host=db port=5432 user=%s password=%s dbname=%s sslmode=disable TimeZone=UTC",
 		cfg.DBUser,
 		cfg.DBPassword,
 		cfg.DBName,
