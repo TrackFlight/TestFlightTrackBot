@@ -119,7 +119,6 @@ func DetectQueryImports(tables []Table, queries []Query) []string {
 			}
 			if GetQueryOptions(&query).Cache.Allow {
 				imports["fmt"] = struct{}{}
-				imports["time"] = struct{}{}
 				imports["encoding/json"] = struct{}{}
 			}
 		}

@@ -118,10 +118,9 @@ bulkParams []{{$bulkParamsName}}
     {{- end }}
     {{- if $allowedGetCache}}
     valkeyField := "{{if eq (len .Columns) 1}}{{(index .Columns 0).Name}}{{else}}{{- if and $cacheOptions.Key (not $isMany)}}__row{{else}}__all{{- end -}}{{- end -}}"
-    err := ctx.redis.DoCache(
+    err := ctx.redis.Do(
         ctx.cx,
-        ctx.redis.B().Hget().Key(valkeyKey).Field(valkeyField).Cache(),
-        {{$cacheOptions.TTL}} * time.Second,
+        ctx.redis.B().Hget().Key(valkeyKey).Field(valkeyField).Build(),
     ).DecodeJSON(&i)
     if err == nil {
         return i, nil
@@ -194,9 +193,10 @@ bulkParams []{{$bulkParamsName}}
     if err != nil {
         return i, err
     }
-    ctx.redis.Do(
+    ctx.redis.DoMulti(
         ctx.cx,
         ctx.redis.B().Hset().Key(valkeyKey).FieldValue().FieldValue(valkeyField, string(jsonData)).Build(),
+        ctx.redis.B().Expire().Key(valkeyKey).Seconds({{$cacheOptions.TTL}}).Build(),
     )
     {{- else if eq $cacheOptions.Kind "remove"}}
     ctx.redis.Do{{- if gt (len $cacheOptions.Fields) 1 }}Multi{{end}}(
