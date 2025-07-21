@@ -30,6 +30,7 @@ ORDER BY chat_links.created_at;
 
 -- name: Track :one
 -- cache: type:remove table:chat_links key:chat_id fields:all_by_key
+-- order: chat_id, link_id, link_url
 WITH existing_link AS (
     SELECT id, app_id, status, last_availability
     FROM links as l

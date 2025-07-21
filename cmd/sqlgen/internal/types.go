@@ -55,6 +55,11 @@ type Column struct {
 	} `json:"type"`
 }
 
+type QueryOptions struct {
+	Cache CacheOptions
+	Order []string
+}
+
 type CacheOptions struct {
 	Allow  bool
 	Kind   string

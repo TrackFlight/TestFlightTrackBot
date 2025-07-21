@@ -117,7 +117,7 @@ func DetectQueryImports(tables []Table, queries []Query) []string {
 					imports[imp] = struct{}{}
 				}
 			}
-			if GetCacheOptions(query).Allow {
+			if GetQueryOptions(&query).Cache.Allow {
 				imports["fmt"] = struct{}{}
 				imports["time"] = struct{}{}
 				imports["encoding/json"] = struct{}{}
@@ -186,15 +186,17 @@ func FindCompatible(tables []Table) func(tableName string, cols []Column) string
 	}
 }
 
-func GetCacheOptions(query Query) *CacheOptions {
-	options := &CacheOptions{
-		TTL: 60 * 15,
+func GetQueryOptions(query *Query) *QueryOptions {
+	options := &QueryOptions{
+		Cache: CacheOptions{
+			TTL: 60 * 15,
+		},
 	}
 	for _, comment := range query.Comments {
 		commentData := strings.SplitN(strings.TrimSpace(comment), ":", 2)
 		switch commentData[0] {
 		case "cache":
-			options.Allow = true
+			options.Cache.Allow = true
 
 			paramStr := strings.TrimSpace(commentData[1])
 			i := 0
@@ -247,29 +249,54 @@ func GetCacheOptions(query Query) *CacheOptions {
 				}
 				switch key {
 				case "type":
-					options.Kind = value[0]
+					options.Cache.Kind = value[0]
 				case "key":
-					options.Key = value[0]
+					options.Cache.Key = value[0]
 				case "table":
-					options.Table = value[0]
+					options.Cache.Table = value[0]
 				case "fields":
-					options.Fields = value
+					options.Cache.Fields = value
 				case "ttl":
-					options.TTL, _ = strconv.ParseInt(value[0], 10, 64)
+					options.Cache.TTL, _ = strconv.ParseInt(value[0], 10, 64)
 				}
 			}
 
-			if options.Kind == "" || options.Table == "" {
+			if options.Cache.Kind == "" || options.Cache.Table == "" {
 				gologging.FatalF("cache options must have type and table defined in query %s", query.Name)
-			} else if options.Kind == "remove" && len(options.Fields) == 0 {
+			} else if options.Cache.Kind == "remove" && len(options.Cache.Fields) == 0 {
 				gologging.FatalF("cache options with type 'remove' must have fields defined in query %s", query.Name)
+			}
+		case "order":
+			order := strings.TrimSpace(commentData[1])
+			i := 0
+			length := len(order)
+			valStart := 0
+			for i < length {
+				for i < length && unicode.IsSpace(rune(order[i])) {
+					i++
+				}
+				if order[i] == ',' {
+					tmpValue := strings.TrimSpace(order[valStart:i])
+					if len(tmpValue) > 0 {
+						options.Order = append(options.Order, tmpValue)
+					}
+					valStart = i + 1
+				}
+				i++
+			}
+			tmpValue := strings.TrimSpace(order[valStart:i])
+			if len(tmpValue) > 0 {
+				options.Order = append(options.Order, tmpValue)
+			}
+			if len(options.Order) > 0 && len(options.Order) != len(query.Params) {
+				gologging.FatalF("order options must have the same number of fields as parameters in query %s", query.Name)
 			}
 		}
 	}
 	return options
 }
 
-func GetSprintfFormat(query Query, from string) string {
+func GetSprintfFormat(query *Query, from string) string {
 	for _, param := range query.Params {
 		if from == param.Column.Name {
 			return internalGoType(param.Column, true, false)
@@ -294,6 +321,26 @@ func IsBulkQuery(query *Query) bool {
 		gologging.FatalF("query %s is marked as :one but contains array parameters, which is not allowed", query.Name)
 	}
 	return resulBulk
+}
+
+func GetParamsOrdered(query *Query, order []string) []Param {
+	if len(query.Params) <= 1 || len(order) == 0 {
+		return query.Params
+	}
+
+	paramMap := make(map[string]Param, len(query.Params))
+	for _, p := range query.Params {
+		paramMap[p.Column.Name] = p
+	}
+
+	orderedParams := make([]Param, 0, len(order))
+	for _, name := range order {
+		if p, ok := paramMap[name]; ok {
+			orderedParams = append(orderedParams, p)
+		}
+	}
+
+	return orderedParams
 }
 
 func internalFindCompatible(tables []Table, tableName string, cols []Column) string {

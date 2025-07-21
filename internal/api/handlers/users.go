@@ -88,7 +88,7 @@ func AddLink(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if following, err := dbCtx.ChatStore.Track(newLink.Link, newLink.ID, r.Context().Value(middleware.UserIDKey).(int64)); err != nil {
+		if following, err := dbCtx.ChatStore.Track(r.Context().Value(middleware.UserIDKey).(int64), newLink.ID, newLink.Link); err != nil {
 			utils.JSONError(w, types.ErrInternalServer, "Error tracking link", http.StatusInternalServerError)
 			return
 		} else if following == nil {

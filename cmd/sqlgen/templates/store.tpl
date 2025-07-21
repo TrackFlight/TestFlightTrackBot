@@ -57,7 +57,8 @@ type {{$returnName}} struct {
 func (ctx *{{$name}}) {{.Name}}(
 {{- $first := true -}}
 {{- $addedBulk := true -}}
-{{- range .Params -}}
+{{- $queryOptions := (GetQueryOptions .)}}
+{{- range (GetParamsOrdered . $queryOptions.Order) -}}
 {{- if not (and $isBulk .Column.IsArray (not $isSingleBulk)) -}}
 {{- if not $first}}, {{end -}}
 {{- .Column.Name | ToCamelCase}} {{ if .Column.IsArray -}}[]{{- end -}}{{ToGoType .Column true}}
@@ -103,7 +104,7 @@ bulkParams []{{$bulkParamsName}}
         	end = totalSize
         }
     {{- end}}
-    {{- $cacheOptions := (GetCacheOptions .)}}
+    {{- $cacheOptions := $queryOptions.Cache}}
     {{- $tableSingularName := $cacheOptions.Table | Singular}}
     {{- $allowedGetCache := and $cacheOptions.Allow (not (eq .Cmd ":exec")) (eq $cacheOptions.Kind "get") (not $isBulk)}}
     {{- if or $allowedGetCache (eq $cacheOptions.Kind "remove")}}

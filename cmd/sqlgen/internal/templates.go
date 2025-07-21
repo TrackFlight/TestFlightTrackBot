@@ -20,9 +20,10 @@ func ParseTemplates(schema Schema, templateDir string) *Templates {
 		"ToGoType":         ToGoType,
 		"ToGoCase":         ToGoCase,
 		"Singular":         Singular,
-		"GetCacheOptions":  GetCacheOptions,
+		"GetQueryOptions":  GetQueryOptions,
 		"GetSprintfFormat": GetSprintfFormat,
 		"IsBulkQuery":      IsBulkQuery,
+		"GetParamsOrdered": GetParamsOrdered,
 		"contains": func(s []string, e string) bool {
 			return slices.Contains(s, e)
 		},
