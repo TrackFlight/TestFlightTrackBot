@@ -40,7 +40,7 @@ INSERT INTO apps (id, app_name, icon_url, description)
 SELECT
     app_id, app_name, icon_url, description
 FROM input_data
-ON CONFLICT (id, app_name)
+ON CONFLICT (app_name)
 DO UPDATE SET
     app_name     = EXCLUDED.app_name,
     icon_url     = EXCLUDED.icon_url,
