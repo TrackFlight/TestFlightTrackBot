@@ -29,7 +29,7 @@ func Generate() {
 	GenerateModelFiles(publicSchema, templates.Model, modelsDir)
 	GenerateEnumFile(publicSchema, templates.Types, modelsDir)
 	GenerateStoreFile(publicSchema, config, templates.Store, outputDir)
-	GenerateDBFile(config, templates.DB, outputDir)
+	GenerateDBFile(publicSchema, config, templates.DB, outputDir)
 
 	_ = os.Remove(sqlcJsonFile)
 }

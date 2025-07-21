@@ -4,6 +4,7 @@ package db
 
 import (
     "context"
+    "github.com/jackc/pgx/v5/pgtype"
 
     "github.com/jackc/pgx/v5"
     "github.com/jackc/pgx/v5/pgconn"
@@ -17,6 +18,8 @@ type DBTX interface {
 	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
 	Query(context.Context, string, ...interface{}) (pgx.Rows, error)
 	QueryRow(context.Context, string, ...interface{}) pgx.Row
+	LoadType(ctx context.Context, typeName string) (*pgtype.Type, error)
+	TypeMap() *pgtype.Map
 }
 
 type DB struct {
@@ -25,10 +28,25 @@ type DB struct {
 {{- end }}
 }
 
-func new(db DBTX, redis valkey.Client) *DB {
+func new(db DBTX, redis valkey.Client) (*DB, error) {
+    {{- if gt (len .Enums) 0 }}
+    pgxTypes := []string{
+        {{- range .Enums }}
+        "{{.Name}}",
+        "_{{.Name}}",
+        {{- end }}
+    }
+    for _, pgxType := range pgxTypes {
+        loadType, err := db.LoadType(context.Background(), pgxType)
+        if err != nil {
+            return nil, err
+        }
+        db.TypeMap().RegisterType(loadType)
+    }
+    {{- end }}
     return &DB{
         {{- range .Queries }}
         {{ . | ToPascalCase }}Store: &{{ . | ToPascalCase }}Store{db: db, redis: redis, cx: context.Background()},
         {{- end }}
-    }
+    }, nil
 }

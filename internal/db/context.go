@@ -48,5 +48,5 @@ func NewDB(cfg *config.Config) (*DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("connect to valkey: %w", err)
 	}
-	return new(conn, redis), nil
+	return new(conn, redis)
 }

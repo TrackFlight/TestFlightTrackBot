@@ -50,7 +50,7 @@ func GenerateStoreFile(schema Schema, config SQLCConfig, t *template.Template, o
 	}
 }
 
-func GenerateDBFile(config SQLCConfig, t *template.Template, outDir string) {
+func GenerateDBFile(schema Schema, config SQLCConfig, t *template.Template, outDir string) {
 	outPath := filepath.Join(outDir, "db_gen.go")
 	queries := make(map[string]struct{})
 	for _, query := range config.Queries {
@@ -58,6 +58,7 @@ func GenerateDBFile(config SQLCConfig, t *template.Template, outDir string) {
 	}
 	writeTemplateFile(outPath, t, map[string]any{
 		"Queries": slices.Collect(maps.Keys(queries)),
+		"Enums":   schema.Enums,
 	})
 }
 
