@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"github.com/GoBotApiOfficial/gobotapi/types"
 	"github.com/Laky-64/TestFlightTrackBot/internal/config"
 	"github.com/Laky-64/TestFlightTrackBot/internal/db"
@@ -12,6 +13,7 @@ import (
 	"github.com/Laky-64/TestFlightTrackBot/internal/translator"
 	"github.com/Laky-64/TestFlightTrackBot/internal/utils"
 	"github.com/Laky-64/gologging"
+	"github.com/jackc/pgx/v5"
 	"maps"
 	"slices"
 	"sync"
@@ -73,13 +75,13 @@ func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.B
 			}
 
 			err = dbCtx.AppStore.BulkUpsert(slices.Collect(maps.Values(newApps)))
-			if err != nil {
+			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 				gologging.ErrorF("bulk upsert apps: %v", err)
 				continue
 			}
 
 			if len(updates) > 0 {
-				if dbCtx.LinkStore.BulkUpdate(updates) != nil {
+				if err = dbCtx.LinkStore.BulkUpdate(updates); err != nil && !errors.Is(err, pgx.ErrNoRows) {
 					gologging.ErrorF("bulk update links: %v", err)
 					continue
 				}
