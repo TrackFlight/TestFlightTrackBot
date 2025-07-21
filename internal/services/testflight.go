@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"github.com/GoBotApiOfficial/gobotapi/types"
+	"github.com/Laky-64/TestFlightTrackBot/internal/config"
 	"github.com/Laky-64/TestFlightTrackBot/internal/db"
 	"github.com/Laky-64/TestFlightTrackBot/internal/db/models"
 	"github.com/Laky-64/TestFlightTrackBot/internal/telegram/bot"
@@ -11,11 +12,13 @@ import (
 	"github.com/Laky-64/TestFlightTrackBot/internal/translator"
 	"github.com/Laky-64/TestFlightTrackBot/internal/utils"
 	"github.com/Laky-64/gologging"
+	"maps"
+	"slices"
 	"sync"
 	"time"
 )
 
-func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.Bot, dbCtx *db.DB, tfClient *testflight.Client) {
+func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.Bot, cfg *config.Config, dbCtx *db.DB, tfClient *testflight.Client) {
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 
@@ -24,7 +27,7 @@ func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.B
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			usedLinks, err := dbCtx.LinkStore.FindUsedLinks()
+			usedLinks, err := dbCtx.LinkStore.GetUsedLinks()
 			if err != nil {
 				gologging.ErrorF("cleanup find: %v", err)
 				continue
@@ -35,40 +38,41 @@ func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.B
 				continue
 			}
 
-			var updates []models.LinkUpdate
-			newApps := make(map[string]*models.AppUpsert)
-			var requestNotifications []models.NotificationRequest
-			var removeLinks []uint
+			var updates []db.BulkUpdateLinkParams
+			newApps := make(map[string]db.BulkUpsertAppParams)
+			var requestNotifications []db.BulkUpdateNotificationsChatParams
+			var removeLinks []int64
 			for _, link := range usedLinks {
 				checked := checkedLinks[link.URL]
 				if checked.Error != nil {
 					continue
 				}
-				if checked.Status == models.StatusInvalid {
+				if checked.Status == models.LinkStatusEnumInvalid {
 					removeLinks = append(removeLinks, link.ID)
 					continue
 				}
-				if _, ok := newApps[checked.AppName]; (link.AppID != nil || !ok) && len(checked.AppName) > 0 {
-					newApps[checked.AppName] = &models.AppUpsert{
-						LinkID:      &link.ID,
+				if _, ok := newApps[checked.AppName]; (link.AppID.Valid || !ok) && len(checked.AppName) > 0 {
+					newApps[checked.AppName] = db.BulkUpsertAppParams{
+						AppID:       link.AppID.Int64,
+						AppName:     checked.AppName,
 						IconURL:     checked.IconURL,
 						Description: checked.Description,
 					}
 				}
 				if checked.Status != link.Status {
-					updates = append(updates, models.LinkUpdate{
-						ID:      link.ID,
+					updates = append(updates, db.BulkUpdateLinkParams{
+						LinkID:  link.ID,
 						AppName: checked.AppName,
 						Status:  checked.Status,
 					})
-					requestNotifications = append(requestNotifications, models.NotificationRequest{
+					requestNotifications = append(requestNotifications, db.BulkUpdateNotificationsChatParams{
 						LinkID: link.ID,
 						Status: checked.Status,
 					})
 				}
 			}
 
-			err = dbCtx.AppStore.BulkUpsert(newApps)
+			err = dbCtx.AppStore.BulkUpsert(slices.Collect(maps.Values(newApps)))
 			if err != nil {
 				gologging.ErrorF("bulk upsert apps: %v", err)
 				continue
@@ -79,7 +83,10 @@ func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.B
 					gologging.ErrorF("bulk update links: %v", err)
 					continue
 				}
-				notifications, err := dbCtx.ChatLinkStore.BulkUpdateNotifications(requestNotifications)
+				notifications, err := dbCtx.ChatStore.BulkUpdateNotifications(
+					requestNotifications,
+					int64(cfg.LimitFree),
+				)
 				if err != nil {
 					gologging.ErrorF("bulk update notifications: %v", err)
 					continue
@@ -92,7 +99,7 @@ func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.B
 						updateContext := core.NewLightContext(b.Api, n.Lang)
 						var messageKey translator.Key
 						var keyboard *types.InlineKeyboardMarkup
-						if n.Status == models.StatusAvailable {
+						if n.Status == models.LinkStatusEnumAvailable {
 							messageKey = translator.BetaOpened
 							keyboard = &types.InlineKeyboardMarkup{
 								InlineKeyboard: [][]types.InlineKeyboardButton{

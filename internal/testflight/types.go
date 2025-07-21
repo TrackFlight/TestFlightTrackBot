@@ -11,5 +11,5 @@ type Result struct {
 	AppName     string
 	IconURL     string
 	Description string
-	Status      models.LinkStatus
+	Status      models.LinkStatusEnum
 }

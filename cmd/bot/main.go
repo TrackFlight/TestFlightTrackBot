@@ -37,7 +37,7 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	services.StartAll(ctx, b, dbCtx, tfClient)
+	services.StartAll(ctx, b, cfg, dbCtx, tfClient)
 
 	api.Start(dbCtx, cfg)
 

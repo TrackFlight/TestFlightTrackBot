@@ -9,14 +9,14 @@ import (
 	"github.com/Laky-64/TestFlightTrackBot/internal/db"
 	"github.com/Laky-64/TestFlightTrackBot/internal/testflight"
 	"github.com/go-chi/chi/v5"
-	"gorm.io/gorm"
+	"github.com/jackc/pgx/v5"
 	"net/http"
 	"strconv"
 )
 
 func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		list, err := dbCtx.ChatLinkStore.TrackedList(
+		list, err := dbCtx.ChatStore.TrackedList(
 			r.Context().Value(middleware.UserIDKey).(int64),
 		)
 		if err != nil {
@@ -26,8 +26,8 @@ func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 		var result []types.Link
 		for _, item := range list {
 			var timestamp int64
-			if item.LastAvailability != nil {
-				timestamp = item.LastAvailability.UTC().Unix()
+			if item.LastAvailability.Valid {
+				timestamp = item.LastAvailability.Time.UTC().Unix()
 			}
 			result = append(result, types.Link{
 				ID:               item.ID,
@@ -53,8 +53,8 @@ func DeleteLink(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err := dbCtx.ChatLinkStore.Delete(r.Context().Value(middleware.UserIDKey).(int64), uint(linkID))
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		err := dbCtx.ChatStore.Delete(r.Context().Value(middleware.UserIDKey).(int64), int64(linkID))
+		if errors.Is(err, pgx.ErrNoRows) {
 			utils.JSONError(w, types.ErrBadRequest, "Link not found", http.StatusNotFound)
 			return
 		} else if err != nil {
@@ -88,7 +88,7 @@ func AddLink(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if following, err := dbCtx.ChatLinkStore.Track(r.Context().Value(middleware.UserIDKey).(int64), newLink.ID, newLink.Link); err != nil {
+		if following, err := dbCtx.ChatStore.Track(newLink.Link, newLink.ID, r.Context().Value(middleware.UserIDKey).(int64)); err != nil {
 			utils.JSONError(w, types.ErrInternalServer, "Error tracking link", http.StatusInternalServerError)
 			return
 		} else if following == nil {
@@ -98,8 +98,8 @@ func AddLink(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusCreated)
 			var timestamp int64
-			if following.LastAvailability != nil {
-				timestamp = following.LastAvailability.UTC().Unix()
+			if following.LastAvailability.Valid {
+				timestamp = following.LastAvailability.Time.UTC().Unix()
 			}
 			_ = json.NewEncoder(w).Encode(types.Link{
 				ID:               following.ID,

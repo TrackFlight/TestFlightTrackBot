@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"github.com/Laky-64/TestFlightTrackBot/internal/config"
 	"github.com/Laky-64/TestFlightTrackBot/internal/db"
 	"github.com/Laky-64/TestFlightTrackBot/internal/telegram/bot"
 	"github.com/Laky-64/TestFlightTrackBot/internal/testflight"
@@ -12,6 +13,7 @@ import (
 func StartAll(
 	ctx context.Context,
 	b *bot.Bot,
+	cfg *config.Config,
 	dbCtx *db.DB,
 	tfClient *testflight.Client,
 ) {
@@ -20,6 +22,6 @@ func StartAll(
 		time.Second,
 	)
 
-	go startTestflight(ctx, rateLimit, b, dbCtx, tfClient)
+	go startTestflight(ctx, rateLimit, b, cfg, dbCtx, tfClient)
 	go startTorRotate(ctx, tfClient.TorClient)
 }

@@ -2,13 +2,14 @@ package testflight
 
 import (
 	"errors"
+	"github.com/Laky-64/TestFlightTrackBot/internal/db"
 	"github.com/Laky-64/TestFlightTrackBot/internal/db/models"
 	"github.com/Laky-64/TestFlightTrackBot/internal/tor"
 	"github.com/Laky-64/TestFlightTrackBot/internal/utils"
 	"sync"
 )
 
-func (c *Client) Check(links []models.Link) (map[string]Result, error) {
+func (c *Client) Check(links []db.GetUsedLinksLinkRow) (map[string]Result, error) {
 	transaction, err := c.TorClient.NewTransaction(len(links))
 	if err != nil {
 		return nil, err
@@ -31,7 +32,7 @@ func (c *Client) Check(links []models.Link) (map[string]Result, error) {
 				if err != nil {
 					if res != nil && res.StatusCode == 404 {
 						results[link.URL] = Result{
-							Status: models.StatusInvalid,
+							Status: models.LinkStatusEnumInvalid,
 						}
 					} else {
 						results[link.URL] = Result{
@@ -47,16 +48,16 @@ func (c *Client) Check(links []models.Link) (map[string]Result, error) {
 					continue
 				}
 				var appName, appIcon, description string
-				var status models.LinkStatus
+				var status models.LinkStatusEnum
 				rawAppName := RegexAppName.FindAllStringSubmatch(bodyString, -1)
 				if len(rawAppName) == 0 {
-					status = models.StatusClosed
+					status = models.LinkStatusEnumClosed
 				} else {
 					rawStatus := RegexStatus.FindAllStringSubmatch(bodyString, -1)
 					if rawStatus[0][1] == "This beta is full." {
-						status = models.StatusFull
+						status = models.LinkStatusEnumFull
 					} else {
-						status = models.StatusAvailable
+						status = models.LinkStatusEnumAvailable
 					}
 					appName = rawAppName[0][1]
 					appIcon = RegexAppIcon.FindStringSubmatch(bodyString)[1]

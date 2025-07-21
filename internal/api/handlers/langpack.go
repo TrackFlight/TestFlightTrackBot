@@ -13,7 +13,7 @@ func GetStrings(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 		language := r.URL.Query().Get("language")
 
 		if len(language) == 0 {
-			language = dbCtx.ChatLinkStore.GetLanguage(
+			language, _ = dbCtx.ChatStore.GetLanguage(
 				r.Context().Value(middleware.UserIDKey).(int64),
 				r.URL.Query().Get("languageHint"),
 			)

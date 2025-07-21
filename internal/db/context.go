@@ -1,20 +1,16 @@
 package db
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	"github.com/Laky-64/TestFlightTrackBot/internal/config"
-	"github.com/Laky-64/TestFlightTrackBot/internal/db/models"
+	"github.com/jackc/pgx/v5"
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	"github.com/valkey-io/valkey-go"
+	"log"
 )
-
-type DB struct {
-	AppStore      *appStore
-	LinkStore     *linkStore
-	ChatLinkStore *chatLinkStore
-}
 
 func NewDB(cfg *config.Config) (*DB, error) {
 	dsn := fmt.Sprintf(
@@ -24,40 +20,34 @@ func NewDB(cfg *config.Config) (*DB, error) {
 		cfg.DBPassword,
 		cfg.DBName,
 	)
-	db, err := gorm.Open(
-		postgres.Open(dsn),
-		&gorm.Config{
-			Logger: logger.Default.LogMode(logger.Silent),
-		},
-	)
-	if err != nil {
-		return nil, err
+	if err := goose.SetDialect("pgx"); err != nil {
+		log.Fatalf("goose: failed to set dialect: %v", err)
 	}
 
-	sqlDB, err := db.DB()
+	sqlConn, err := goose.OpenDBWithDriver("pgx", dsn)
 	if err != nil {
-		return nil, err
+		log.Fatalf("goose: failed to open DB: %v", err)
 	}
+	defer func(db *sql.DB) {
+		_ = db.Close()
+	}(sqlConn)
 
 	goose.SetLogger(goose.NopLogger())
-	if err = goose.Up(sqlDB, "internal/db/migrations"); err != nil {
+
+	if err = goose.Up(sqlConn, "internal/db/schema"); err != nil {
+		return nil, fmt.Errorf("goose up: %w", err)
+	}
+
+	conn, err := pgx.Connect(context.Background(), dsn)
+	if err != nil {
 		return nil, err
 	}
 
-	if err = db.AutoMigrate(
-		&models.Chat{},
-		&models.App{},
-		&models.Link{},
-		&models.ChatLink{},
-		&models.PremiumUser{},
-		&models.TranslatorLanguage{},
-	); err != nil {
-		return nil, err
+	redis, err := valkey.NewClient(valkey.ClientOption{
+		InitAddress: []string{"valkey:6379"},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("connect to valkey: %w", err)
 	}
-
-	return &DB{
-		AppStore:      &appStore{db: db},
-		LinkStore:     &linkStore{db: db, cfg: cfg},
-		ChatLinkStore: &chatLinkStore{db: db, cfg: cfg},
-	}, nil
+	return new(conn, redis), nil
 }

@@ -4,7 +4,7 @@ import "strings"
 
 const base36Chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-func encodeBase36(n uint) string {
+func encodeBase36(n int64) string {
 	if n == 0 {
 		return "0"
 	}
@@ -28,7 +28,7 @@ func padLeft(s string, minLen int) string {
 	return strings.Repeat("0", minLen-len(s)) + s
 }
 
-func EncodeTag(id uint) string {
+func EncodeTag(id int64) string {
 	obfuscated := id ^ 0x64
 	encoded := encodeBase36(obfuscated)
 	return padLeft(encoded, 3)

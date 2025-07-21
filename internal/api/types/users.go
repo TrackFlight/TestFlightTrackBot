@@ -1,7 +1,7 @@
 package types
 
 type Link struct {
-	ID               uint   `json:"id"`
+	ID               int64  `json:"id"`
 	Tag              string `json:"tag"`
 	AppName          string `json:"app_name"`
 	IconURL          string `json:"icon_url"`
@@ -11,6 +11,6 @@ type Link struct {
 }
 
 type NewLink struct {
-	ID   uint   `json:"id"`
+	ID   int64  `json:"id"`
 	Link string `json:"link"`
 }
