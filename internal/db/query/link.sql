@@ -21,7 +21,9 @@ JOIN chat_links ON chat_links.link_id = deleted.link_id
 JOIN chats ON chats.id = chat_links.chat_id;
 
 
--- name: BulkUpdate :exec
+-- name: BulkUpdate :many
+-- cache: type:update_version table:links key:link_ids ttl:1w
+-- exclude: link_id
 WITH input_data AS (
     SELECT
         UNNEST(@link_ids::bigint[]) AS link_id,
@@ -42,4 +44,4 @@ WHERE links.id = i.link_id
 AND (
     links.status IS DISTINCT FROM i.status
     OR links.app_id IS DISTINCT FROM apps.id
-);
+) RETURNING links.id AS link_id;

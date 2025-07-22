@@ -84,7 +84,6 @@ WHERE chat_id = @chat_id AND link_id = @link_id;
 
 
 -- name: BulkUpdateNotifications :many
--- cache: type:update_version table:links key:link_ids ttl:1w
 WITH input_data AS (
     SELECT
         UNNEST(@link_ids::bigint[]) AS link_id,
