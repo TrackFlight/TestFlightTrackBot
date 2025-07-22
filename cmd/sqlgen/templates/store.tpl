@@ -107,10 +107,20 @@ bulkParams []{{$bulkParamsName}}
     {{- $cacheOptions := $queryOptions.Cache}}
     {{- $tableSingularName := $cacheOptions.Table | Singular}}
     {{- $allowedGetCache := and $cacheOptions.Allow (not (eq .Cmd ":exec")) (eq $cacheOptions.Kind "get") (not $isBulk)}}
+    {{- $allowedVersioning := and $allowedGetCache $cacheOptions.VersionBy}}
+    {{- $allowedUpdateVersions := and (eq $cacheOptions.Kind "update_version") $isBulk}}
+    {{- $versioningField := ""}}
+    {{- $fieldName := ""}}
+    {{- $versionType := ""}}
+    {{- if $allowedVersioning}}
+    {{- $versioningField = printf "fmt.Sprintf(\"%s_version:%s\"" ($cacheOptions.VersionBy.Table | Singular) (GetSprintfFormat $cacheOptions.VersionBy.Column)}}
+    {{- $fieldName = $cacheOptions.VersionBy.Column.Name | ToPascalCase | ToGoCase}}
+    {{- $versionType = ToGoType $cacheOptions.VersionBy.Column true}}
+    {{- end}}
     {{- if or $allowedGetCache (eq $cacheOptions.Kind "remove")}}
     {{- if not (and (contains $cacheOptions.Fields "all") (eq (len $cacheOptions.Fields) 1))}}
     {{- if $cacheOptions.Key}}
-    valkeyKey := fmt.Sprintf("{{$tableSingularName}}:{{GetSprintfFormat . $cacheOptions.Key}}", {{$cacheOptions.Key | ToCamelCase}})
+    valkeyKey := fmt.Sprintf("{{$tableSingularName}}:{{GetSprintfFormatFromKey . $cacheOptions.Key}}", {{$cacheOptions.Key | ToCamelCase}})
     {{- else}}
     valkeyKey := "{{$tableSingularName}}:list"
     {{- end }}
@@ -118,14 +128,54 @@ bulkParams []{{$bulkParamsName}}
     {{- end }}
     {{- if $allowedGetCache}}
     valkeyField := "{{if eq (len .Columns) 1}}{{(index .Columns 0).Name}}{{else}}{{- if and $cacheOptions.Key (not $isMany)}}__row{{else}}__all{{- end -}}{{- end -}}"
-    err := ctx.redis.Do(
+    {{- if $allowedVersioning}}
+    valkeyVersionField := "__versions"
+    {{- end}}
+    res := ctx.redis.DoMulti(
         ctx.cx,
         ctx.redis.B().Hget().Key(valkeyKey).Field(valkeyField).Build(),
-    ).DecodeJSON(&i)
-    if err == nil {
-        return i, nil
+        {{- if $allowedVersioning}}
+        ctx.redis.B().Hget().Key(valkeyKey).Field(valkeyVersionField).Build(),
+        {{- end}}
+    )
+    if res[0].Error() == nil {{- if $allowedVersioning}} && res[1].Error() == nil{{- end}} {
+        {{- if $allowedVersioning}}
+        var vMap map[{{$versionType}}]int64
+        if err := res[1].DecodeJSON(&vMap); err == nil {
+            vMapIDs := slices.Collect(maps.Keys(vMap))
+            versionKeys := make([]string, len(vMapIDs))
+            for idx, vMapID := range vMapIDs {
+                versionKeys[idx] = {{$versioningField}}, vMapID)
+            }
+            verRes, errVer := ctx.redis.Do(
+                ctx.cx,
+                ctx.redis.B().Mget().Key(versionKeys...).Build(),
+            ).AsIntSlice()
+            if errVer == nil {
+                valid := true
+                for idx, vMapID := range vMapIDs {
+					if vMap[vMapID] != verRes[idx] && verRes[idx] != 0 {
+                    	valid = false
+                    	break
+                    }
+				}
+				if valid {
+				    if errAll := res[0].DecodeJSON(&i); errAll == nil {
+				        return {{if $allowPointer -}}&{{- end -}}i, nil
+				    }
+                }
+            }
+        }
+        {{- else}}
+        if err := res[0].DecodeJSON(&i); err == nil {
+            return {{if $allowPointer -}}&{{- end -}}i, nil
+        }
+        {{- end}}
     }
     {{- end }}
+    {{- if $allowedVersioning}}
+    var versionKeys []string
+    {{- end}}
     {{if eq .Cmd ":one" -}}
     row
     {{- else if $isMany -}}
@@ -145,7 +195,7 @@ bulkParams []{{$bulkParamsName}}
         {{.Column.Name | ToCamelCase}}{{ if and $isBulk .Column.IsArray }}[start:end]{{end}},
         {{- end }}
     )
-    {{- if or (eq .Cmd ":one") $isMany}}
+    {{- if not (eq .Cmd ":exec")}}
     {{- $tmpVarName := "i"}}
     {{- if $isMany}}
     {{- $tmpVarName = "item"}}
@@ -172,11 +222,35 @@ bulkParams []{{$bulkParamsName}}
         }
         return {{ if or $isMany $allowPointer }}nil{{else}}i{{- end}}, errScan
     }
-    {{- if or $isMany }}
+    {{- if $isMany }}
         i = append(i, item)
+        {{- if $allowedVersioning}}
+        versionKeys = append(versionKeys, {{$versioningField}}, item.{{$fieldName}}))
+        {{- end}}
     }
     if rows.Err() != nil {
         return nil, rows.Err()
+    }
+    {{- end}}
+    {{- if $allowedVersioning }}
+    {{- if not $isMany}}
+    versionKeys = append(versionKeys, {{$versioningField}}, i.{{$fieldName}}))
+    {{- end}}
+    verRes, _ := ctx.redis.Do(
+        ctx.cx,
+        ctx.redis.B().Mget().Key(versionKeys...).Build(),
+    ).AsIntSlice()
+    vMap := make(map[{{$versionType}}]int64)
+    {{- if $isMany}}
+    for idx, item := range i {
+        vMap[item.{{$fieldName}}] = verRes[idx]
+    }
+    {{- else}}
+    vMap[i.{{$fieldName}}] = verRes[0]
+    {{- end}}
+    jsonVer, err := json.Marshal(vMap)
+    if err != nil {
+        jsonVer = []byte("{}")
     }
     {{- end}}
     {{- end}}
@@ -191,11 +265,14 @@ bulkParams []{{$bulkParamsName}}
     {{- if $allowedGetCache}}
     jsonData, err := json.Marshal(i)
     if err != nil {
-        return i, err
+        return {{if or $allowPointer $isMany}}nil{{else}}i{{end}}, err
     }
     ctx.redis.DoMulti(
         ctx.cx,
         ctx.redis.B().Hset().Key(valkeyKey).FieldValue().FieldValue(valkeyField, string(jsonData)).Build(),
+        {{- if $allowedVersioning }}
+        ctx.redis.B().Hset().Key(valkeyKey).FieldValue().FieldValue(valkeyVersionField, string(jsonVer)).Build(),
+        {{- end}}
         ctx.redis.B().Expire().Key(valkeyKey).Seconds({{$cacheOptions.TTL}}).Build(),
     )
     {{- else if eq $cacheOptions.Kind "remove"}}
@@ -219,6 +296,21 @@ bulkParams []{{$bulkParamsName}}
     if errComm := tx.Commit(ctx.cx); errComm != nil {
         return {{ if not (eq .Cmd ":exec") -}}nil, {{end}}errComm
     }
+    {{- if $allowedUpdateVersions}}
+    var cmdList []valkey.Completed
+    for _, params := range bulkParams {
+        {{- $fieldFormat := printf "fmt.Sprintf(\"%s_version:%s\", params.%s)" $tableSingularName (GetSprintfFormat $cacheOptions.KeyColumn) ($cacheOptions.Key | ToPascalCase | Singular | ToGoCase)}}
+        cmdList = append(
+            cmdList,
+            ctx.redis.B().Incr().Key({{$fieldFormat}}).Build(),
+        )
+        cmdList = append(
+            cmdList,
+            ctx.redis.B().Expire().Key({{$fieldFormat}}).Seconds({{$cacheOptions.TTL}}).Build(),
+        )
+    }
+    ctx.redis.DoMulti(ctx.cx, cmdList...)
+    {{- end}}
     {{- end}}
     return {{ if not (eq .Cmd ":exec") -}}{{if $allowPointer -}}&{{- end -}}i, {{end}}nil
 }

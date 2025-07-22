@@ -117,9 +117,14 @@ func DetectQueryImports(tables []Table, queries []Query) []string {
 					imports[imp] = struct{}{}
 				}
 			}
-			if GetQueryOptions(&query).Cache.Allow {
+			queryOptions := GetQueryOptions(&query)
+			if queryOptions.Cache.Allow {
 				imports["fmt"] = struct{}{}
 				imports["encoding/json"] = struct{}{}
+			}
+			if queryOptions.Cache.VersionBy != nil {
+				imports["slices"] = struct{}{}
+				imports["maps"] = struct{}{}
 			}
 		}
 		var columnParams []Column
@@ -251,10 +256,33 @@ func GetQueryOptions(query *Query) *QueryOptions {
 					options.Cache.Kind = value[0]
 				case "key":
 					options.Cache.Key = value[0]
+					for _, field := range query.Params {
+						if field.Column.Name == options.Cache.Key {
+							options.Cache.KeyColumn = &field.Column
+							break
+						}
+					}
+					if options.Cache.KeyColumn == nil {
+						gologging.FatalF("cache key %s not found in query %s", options.Cache.Key, query.Name)
+					}
 				case "table":
 					options.Cache.Table = value[0]
 				case "fields":
 					options.Cache.Fields = value
+				case "version_by":
+					versionByData := strings.SplitN(value[0], ".", 2)
+					for _, field := range query.Columns {
+						if field.Name == versionByData[1] {
+							options.Cache.VersionBy = &VersionByOptions{
+								Column: &field,
+								Table:  versionByData[0],
+							}
+							break
+						}
+					}
+					if options.Cache.VersionBy == nil {
+						gologging.FatalF("version_by field %s not found in query %s", versionByData[1], query.Name)
+					}
 				case "ttl":
 					seconds, err := parseDurationToSeconds(value[0])
 					if err == nil && seconds > 0 {
@@ -298,13 +326,13 @@ func GetQueryOptions(query *Query) *QueryOptions {
 	return options
 }
 
-func GetSprintfFormat(query *Query, from string) string {
+func GetSprintfFormatFromKey(query *Query, from string) string {
 	for _, param := range query.Params {
 		if from == param.Column.Name {
 			return internalGoType(param.Column, true, false)
 		}
 	}
-	gologging.Fatal("GetSprintfFormat: no parameter found for column %s in query %s", from, query.Name)
+	gologging.Fatal("GetSprintfFormatFromKey: no parameter found for column %s in query %s", from, query.Name)
 	return ""
 }
 

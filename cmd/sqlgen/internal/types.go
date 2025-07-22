@@ -61,10 +61,17 @@ type QueryOptions struct {
 }
 
 type CacheOptions struct {
-	Allow  bool
-	Kind   string
-	Key    string
+	Allow     bool
+	Kind      string
+	Key       string
+	KeyColumn *Column
+	Table     string
+	VersionBy *VersionByOptions
+	Fields    []string
+	TTL       int64
+}
+
+type VersionByOptions struct {
+	Column *Column
 	Table  string
-	Fields []string
-	TTL    int64
 }

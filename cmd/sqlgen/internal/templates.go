@@ -15,13 +15,16 @@ type Templates struct {
 
 func ParseTemplates(schema Schema, templateDir string) *Templates {
 	functions := template.FuncMap{
-		"ToPascalCase":     ToPascalCase,
-		"ToCamelCase":      ToCamelCase,
-		"ToGoType":         ToGoType,
-		"ToGoCase":         ToGoCase,
-		"Singular":         Singular,
-		"GetQueryOptions":  GetQueryOptions,
-		"GetSprintfFormat": GetSprintfFormat,
+		"ToPascalCase":            ToPascalCase,
+		"ToCamelCase":             ToCamelCase,
+		"ToGoType":                ToGoType,
+		"ToGoCase":                ToGoCase,
+		"Singular":                Singular,
+		"GetQueryOptions":         GetQueryOptions,
+		"GetSprintfFormatFromKey": GetSprintfFormatFromKey,
+		"GetSprintfFormat": func(query *Column) string {
+			return internalGoType(*query, true, false)
+		},
 		"IsBulkQuery":      IsBulkQuery,
 		"GetParamsOrdered": GetParamsOrdered,
 		"contains": func(s []string, e string) bool {
