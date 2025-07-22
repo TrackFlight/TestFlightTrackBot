@@ -18,16 +18,42 @@ type {{$name}} struct {
     redis valkey.Client
 }
 {{ range .Queries -}}
+{{- $isBulk := IsBulkQuery .}}
+{{- $queryOptions := GetQueryOptions .}}
+{{- $filteredColumns := FilterColumnsByKeys .Columns $queryOptions.Exclude -}}
+{{- $hasResults := gt (len $filteredColumns) 0 -}}
+{{- $cacheOptions := $queryOptions.Cache}}
+{{- $tableSingularName := $cacheOptions.Table | Singular}}
+{{- $allowedGetCache := and $cacheOptions.Allow (not (eq .Cmd ":exec")) (eq $cacheOptions.Kind "get") (not $isBulk)}}
+{{- $allowedVersioning := and $allowedGetCache $cacheOptions.VersionBy}}
+{{- $allowedUpdateVersions := and (eq $cacheOptions.Kind "update_version") $isBulk}}
+{{- $isCacheKeyDummy := and (contains $queryOptions.Exclude ($cacheOptions.Key | Singular)) $allowedUpdateVersions}}
+{{- $allowedDummy := and (gt (sub (len .Columns) (len $filteredColumns) (bool_to_int $isCacheKeyDummy)) 0)}}
+{{- $cacheDummyKeyType := ""}}
+{{- $versioningField := ""}}
+{{- $fieldName := ""}}
+{{- $fieldUpdateName := ""}}
+{{- $versionType := ""}}
+{{- if $cacheOptions.KeyColumn}}
+{{- $cacheDummyKeyType = ToGoType $cacheOptions.KeyColumn true}}
+{{- end}}
+{{- if $allowedUpdateVersions}}
+{{- $fieldUpdateName = $cacheOptions.Key | ToPascalCase | Singular | ToGoCase}}
+{{- end}}
+{{- if $allowedVersioning}}
+{{- $versioningField = printf "fmt.Sprintf(\"%s_version:%s\"" ($cacheOptions.VersionBy.Table | Singular) (GetSprintfFormat $cacheOptions.VersionBy.Column)}}
+{{- $fieldName = $cacheOptions.VersionBy.Column.Name | ToPascalCase | ToGoCase}}
+{{- $versionType = ToGoType $cacheOptions.VersionBy.Column true}}
+{{- end}}
 {{$queryName := .Name | ToCamelCase}}
 {{- $isMany := eq .Cmd ":many"}}
-{{- $isBulk := IsBulkQuery .}}
 {{- $isSingleBulk := eq (len .Params) 1}}
 const {{$queryName}} = `{{.Text}}`
 {{- $returnName := printf "%s%sRow" .Name $rawName}}
 {{- $allowPointer := not $isMany}}
-{{- if eq (len .Columns) 1 -}}
+{{- if eq (len $filteredColumns) 1 -}}
 {{- $allowPointer = false}}
-{{- $returnName = ToGoType (index .Columns 0) false -}}
+{{- $returnName = ToGoType (index $filteredColumns 0) true -}}
 {{- end }}
 {{- $checkCompatible := ""}}
 {{- $bulkParamsName := printf "%s%sParams" (.Name | ToPascalCase) $rawName}}
@@ -40,14 +66,14 @@ type {{$bulkParamsName}} struct {
 {{- end}}
 }
 {{- end}}
-{{- if gt (len .Columns) 1 }}
-{{- $checkCompatible = FindCompatible (index .Columns 0).Table.Name .Columns}}
+{{- if gt (len $filteredColumns) 1 }}
+{{- $checkCompatible = FindCompatible (index $filteredColumns 0).Table.Name .Columns}}
 {{- if gt (len $checkCompatible) 0 }}
 {{- $returnName = printf "models.%s" ($checkCompatible | ToPascalCase | Singular) -}}
 {{- else}}
 
 type {{$returnName}} struct {
-{{- range .Columns }}
+{{- range $filteredColumns }}
     {{.Name | ToPascalCase | ToGoCase}} {{ToGoType . true}} `json:"{{.Name}}{{if not .NotNull}},omitempty{{end}}"`
 {{- end }}
 }
@@ -57,7 +83,6 @@ type {{$returnName}} struct {
 func (ctx *{{$name}}) {{.Name}}(
 {{- $first := true -}}
 {{- $addedBulk := true -}}
-{{- $queryOptions := (GetQueryOptions .)}}
 {{- range (GetParamsOrdered . $queryOptions.Order) -}}
 {{- if not (and $isBulk .Column.IsArray (not $isSingleBulk)) -}}
 {{- if not $first}}, {{end -}}
@@ -69,12 +94,15 @@ bulkParams []{{$bulkParamsName}}
 {{- end -}}
 {{- $first = false -}}
 {{ end -}}
-) {{if gt (len .Columns) 0 -}}({{ if $isMany -}}[]{{else if $allowPointer -}}*{{- end -}}
+) {{if $hasResults -}}({{ if $isMany -}}[]{{else if $allowPointer -}}*{{- end -}}
 {{$returnName -}}, error)
 {{- else -}} error
 {{- end }} {
-    {{- if not (eq .Cmd ":exec") }}
+    {{- if and (not (eq .Cmd ":exec")) (gt (len $filteredColumns) 0) }}
     var i {{ if $isMany -}}[]{{- end -}}{{$returnName}}
+    {{- end}}
+    {{- if $isCacheKeyDummy}}
+    var iVersions []{{$cacheDummyKeyType}}
     {{- end}}
     {{- if $isBulk }}
     {{- if not $isSingleBulk }}
@@ -94,7 +122,7 @@ bulkParams []{{$bulkParamsName}}
     {{- end}}
     tx, err := ctx.db.Begin(ctx.cx)
     if err != nil {
-        return {{ if not (eq .Cmd ":exec") -}}nil, {{end}}err
+        return {{ if and (not (eq .Cmd ":exec")) $hasResults -}}nil, {{end}}err
     }
     defer tx.Rollback(ctx.cx)
     totalSize := len({{- if not $isSingleBulk }}bulkParams{{else}}{{(index .Params 0).Column.Name | ToCamelCase}}{{end}})
@@ -103,19 +131,6 @@ bulkParams []{{$bulkParamsName}}
         if end > totalSize {
         	end = totalSize
         }
-    {{- end}}
-    {{- $cacheOptions := $queryOptions.Cache}}
-    {{- $tableSingularName := $cacheOptions.Table | Singular}}
-    {{- $allowedGetCache := and $cacheOptions.Allow (not (eq .Cmd ":exec")) (eq $cacheOptions.Kind "get") (not $isBulk)}}
-    {{- $allowedVersioning := and $allowedGetCache $cacheOptions.VersionBy}}
-    {{- $allowedUpdateVersions := and (eq $cacheOptions.Kind "update_version") $isBulk}}
-    {{- $versioningField := ""}}
-    {{- $fieldName := ""}}
-    {{- $versionType := ""}}
-    {{- if $allowedVersioning}}
-    {{- $versioningField = printf "fmt.Sprintf(\"%s_version:%s\"" ($cacheOptions.VersionBy.Table | Singular) (GetSprintfFormat $cacheOptions.VersionBy.Column)}}
-    {{- $fieldName = $cacheOptions.VersionBy.Column.Name | ToPascalCase | ToGoCase}}
-    {{- $versionType = ToGoType $cacheOptions.VersionBy.Column true}}
     {{- end}}
     {{- if or $allowedGetCache (eq $cacheOptions.Kind "remove")}}
     {{- if not (and (contains $cacheOptions.Fields "all") (eq (len $cacheOptions.Fields) 1))}}
@@ -201,35 +216,59 @@ bulkParams []{{$bulkParamsName}}
     {{- $tmpVarName = "item"}}
     defer rows.Close()
     if errQuery != nil {
-        return nil, errQuery
+        return {{if $hasResults -}}nil,{{end}} errQuery
     }
     for rows.Next() {
+        {{- if gt (len $filteredColumns) 0}}
         var item {{$returnName}}
+        {{- end}}
+        {{- if $allowedDummy}}
+        var dummy any
+        {{- end}}
+        {{- if $isCacheKeyDummy }}
+        var itemVersion {{$cacheDummyKeyType}}
+        {{- end}}
         errScan := rows.Scan(
     {{- else if eq .Cmd ":one"}}
     errScan := row.Scan(
     {{- end}}
     {{- if gt (len .Columns) 1}}
     {{- range .Columns}}
+    {{- if and $isCacheKeyDummy (eq ($cacheOptions.Key | Singular) .Name)}}
+    &itemVersion,
+    {{- else if and $allowedDummy (contains $queryOptions.Exclude .Name)}}
+    &dummy,
+    {{- else if eq (len $filteredColumns) 1}}
+    &{{$tmpVarName}},
+    {{- else}}
     &{{$tmpVarName}}.{{.Name | ToPascalCase | ToGoCase}},
     {{- end }}
-    {{ else -}}
-    &{{$tmpVarName}}
-    {{- end -}})
+    {{- end }}
+    {{- else if and $isCacheKeyDummy (eq (len .Columns) 1)}}
+    &itemVersion,
+    {{- else }}
+    &{{$tmpVarName}},
+    {{- end }}
+    )
     if errScan != nil {
         if errors.Is(errScan, pgx.ErrNoRows) {
         	errScan = nil
         }
-        return {{ if or $isMany $allowPointer }}nil{{else}}i{{- end}}, errScan
+        return {{if $hasResults -}}{{ if or $isMany $allowPointer }}nil{{else}}i{{- end}},{{end}} errScan
     }
     {{- if $isMany }}
+        {{- if gt (len $filteredColumns) 0}}
         i = append(i, item)
+        {{- end}}
         {{- if $allowedVersioning}}
         versionKeys = append(versionKeys, {{$versioningField}}, item.{{$fieldName}}))
         {{- end}}
+        {{- if $isCacheKeyDummy}}
+        iVersions = append(iVersions, itemVersion)
+        {{- end}}
     }
     if rows.Err() != nil {
-        return nil, rows.Err()
+        return {{if $hasResults -}}nil,{{end}} rows.Err()
     }
     {{- end}}
     {{- if $allowedVersioning }}
@@ -294,24 +333,33 @@ bulkParams []{{$bulkParamsName}}
     {{- if $isBulk }}
     }
     if errComm := tx.Commit(ctx.cx); errComm != nil {
-        return {{ if not (eq .Cmd ":exec") -}}nil, {{end}}errComm
+        return {{ if and (not (eq .Cmd ":exec")) $hasResults -}}nil, {{end}}errComm
     }
     {{- if $allowedUpdateVersions}}
     var cmdList []valkey.Completed
     for _, params := range bulkParams {
-        {{- $fieldFormat := printf "fmt.Sprintf(\"%s_version:%s\", params.%s)" $tableSingularName (GetSprintfFormat $cacheOptions.KeyColumn) ($cacheOptions.Key | ToPascalCase | Singular | ToGoCase)}}
+        {{- if le (len $filteredColumns) 1}}
+        if !slices.Contains({{if $isCacheKeyDummy}}iVersions{{else}}i{{end}}, params.{{$fieldUpdateName}})
+        {{- else}}
+        if !slices.ContainsFunc(i, func(x {{$returnName}}) bool {
+        	return x.{{$fieldUpdateName}} == params.{{$fieldUpdateName}}
+        })
+        {{- end}} {
+            continue
+        }
+        updateKey := {{ printf "fmt.Sprintf(\"%s_version:%s\", params.%s)" $tableSingularName (GetSprintfFormat $cacheOptions.KeyColumn) $fieldUpdateName}}
         cmdList = append(
             cmdList,
-            ctx.redis.B().Incr().Key({{$fieldFormat}}).Build(),
+            ctx.redis.B().Incr().Key(updateKey).Build(),
         )
         cmdList = append(
             cmdList,
-            ctx.redis.B().Expire().Key({{$fieldFormat}}).Seconds({{$cacheOptions.TTL}}).Build(),
+            ctx.redis.B().Expire().Key(updateKey).Seconds({{$cacheOptions.TTL}}).Build(),
         )
     }
     ctx.redis.DoMulti(ctx.cx, cmdList...)
     {{- end}}
     {{- end}}
-    return {{ if not (eq .Cmd ":exec") -}}{{if $allowPointer -}}&{{- end -}}i, {{end}}nil
+    return {{ if and (not (eq .Cmd ":exec")) $hasResults -}}{{if $allowPointer -}}&{{- end -}}i, {{end}}nil
 }
 {{ end -}}

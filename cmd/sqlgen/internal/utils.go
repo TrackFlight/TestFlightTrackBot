@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Laky-64/gologging"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -108,24 +109,28 @@ func DetectQueryImports(tables []Table, queries []Query) []string {
 	var imports = make(map[string]struct{})
 
 	for _, query := range queries {
+		queryOptions := GetQueryOptions(&query)
 		if len(query.Columns) > 0 {
 			if len(internalFindCompatible(tables, query.Columns[0].Table.Name, query.Columns)) > 0 {
 				imports[fmt.Sprintf("%s/models", currentPackage)] = struct{}{}
 			} else {
-				tmpImports := DetectImports(query.Columns, true)
+				tmpImports := DetectImports(FilterColumnsByKeys(query.Columns, queryOptions.Exclude), true)
 				for _, imp := range tmpImports {
 					imports[imp] = struct{}{}
 				}
 			}
-			queryOptions := GetQueryOptions(&query)
-			if queryOptions.Cache.Allow {
-				imports["fmt"] = struct{}{}
+		}
+		if queryOptions.Cache.Allow {
+			imports["fmt"] = struct{}{}
+			if queryOptions.Cache.Kind == "update_version" {
+				imports["slices"] = struct{}{}
+			} else {
 				imports["encoding/json"] = struct{}{}
 			}
-			if queryOptions.Cache.VersionBy != nil {
-				imports["slices"] = struct{}{}
-				imports["maps"] = struct{}{}
-			}
+		}
+		if queryOptions.Cache.VersionBy != nil {
+			imports["slices"] = struct{}{}
+			imports["maps"] = struct{}{}
 		}
 		var columnParams []Column
 		for _, param := range query.Params {
@@ -262,6 +267,18 @@ func GetQueryOptions(query *Query) *QueryOptions {
 							break
 						}
 					}
+					if options.Cache.Kind == "update_version" {
+						foundVersionBy := false
+						singularName := Singular(options.Cache.Key)
+						for _, field := range query.Columns {
+							if field.Name == singularName {
+								foundVersionBy = true
+							}
+						}
+						if !foundVersionBy {
+							gologging.FatalF("cache key %s not found in query results %s for update_version", singularName, query.Name)
+						}
+					}
 					if options.Cache.KeyColumn == nil {
 						gologging.FatalF("cache key %s not found in query %s", options.Cache.Key, query.Name)
 					}
@@ -297,33 +314,51 @@ func GetQueryOptions(query *Query) *QueryOptions {
 				gologging.FatalF("cache options with type 'remove' must have fields defined in query %s", query.Name)
 			}
 		case "order":
-			order := strings.TrimSpace(commentData[1])
-			i := 0
-			length := len(order)
-			valStart := 0
-			for i < length {
-				for i < length && unicode.IsSpace(rune(order[i])) {
-					i++
-				}
-				if order[i] == ',' {
-					tmpValue := strings.TrimSpace(order[valStart:i])
-					if len(tmpValue) > 0 {
-						options.Order = append(options.Order, tmpValue)
-					}
-					valStart = i + 1
-				}
-				i++
-			}
-			tmpValue := strings.TrimSpace(order[valStart:i])
-			if len(tmpValue) > 0 {
-				options.Order = append(options.Order, tmpValue)
-			}
+			options.Order = readListParams(commentData[1])
 			if len(options.Order) > 0 && len(options.Order) != len(query.Params) {
 				gologging.FatalF("order options must have the same number of fields as parameters in query %s", query.Name)
+			}
+		case "exclude":
+			options.Exclude = readListParams(commentData[1])
+			for _, field := range options.Exclude {
+				if !slices.ContainsFunc(query.Columns, func(c Column) bool {
+					return c.Name == field
+				}) {
+					gologging.FatalF("exclude field %s not found in query %s", field, query.Name)
+				}
+			}
+			if len(options.Exclude) > len(query.Columns) {
+				gologging.FatalF("exclude options must have the same number of fields as columns in query %s", query.Name)
 			}
 		}
 	}
 	return options
+}
+
+func readListParams(input string) []string {
+	input = strings.TrimSpace(input)
+	var params []string
+	i := 0
+	length := len(input)
+	valStart := 0
+	for i < length {
+		for i < length && unicode.IsSpace(rune(input[i])) {
+			i++
+		}
+		if input[i] == ',' {
+			tmpValue := strings.TrimSpace(input[valStart:i])
+			if len(tmpValue) > 0 {
+				params = append(params, tmpValue)
+			}
+			valStart = i + 1
+		}
+		i++
+	}
+	tmpValue := strings.TrimSpace(input[valStart:i])
+	if len(tmpValue) > 0 {
+		params = append(params, tmpValue)
+	}
+	return params
 }
 
 func GetSprintfFormatFromKey(query *Query, from string) string {
@@ -414,4 +449,17 @@ func parseDurationToSeconds(input string) (int64, error) {
 		}
 	}
 	return totalSec, nil
+}
+
+func FilterColumnsByKeys(columns []Column, exclude []string) []Column {
+	if len(exclude) == 0 {
+		return columns
+	}
+	var filtered []Column
+	for _, col := range columns {
+		if !slices.Contains(exclude, col.Name) {
+			filtered = append(filtered, col)
+		}
+	}
+	return filtered
 }
