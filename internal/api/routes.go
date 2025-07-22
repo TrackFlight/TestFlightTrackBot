@@ -34,7 +34,7 @@ func Start(dbCtx *db.DB, cfg *config.Config) {
 
 			private.Route("/users", func(users chi.Router) {
 				users.Get("/links", handlers.GetLinks(dbCtx))
-				users.Post("/links", handlers.AddLink(dbCtx))
+				users.Post("/links", handlers.AddLink(dbCtx, cfg))
 				users.Delete("/links/{linkID}", handlers.DeleteLink(dbCtx))
 			})
 

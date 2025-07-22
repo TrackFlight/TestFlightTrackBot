@@ -6,6 +6,7 @@ import (
 	"github.com/Laky-64/TestFlightTrackBot/internal/api/middleware"
 	"github.com/Laky-64/TestFlightTrackBot/internal/api/types"
 	"github.com/Laky-64/TestFlightTrackBot/internal/api/utils"
+	"github.com/Laky-64/TestFlightTrackBot/internal/config"
 	"github.com/Laky-64/TestFlightTrackBot/internal/db"
 	"github.com/Laky-64/TestFlightTrackBot/internal/testflight"
 	"github.com/go-chi/chi/v5"
@@ -66,7 +67,7 @@ func DeleteLink(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func AddLink(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
+func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var newLink types.NewLink
 		if err := json.NewDecoder(r.Body).Decode(&newLink); err != nil {
@@ -88,7 +89,7 @@ func AddLink(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if following, err := dbCtx.ChatStore.Track(r.Context().Value(middleware.UserIDKey).(int64), newLink.ID, newLink.Link); err != nil {
+		if following, err := dbCtx.ChatStore.Track(r.Context().Value(middleware.UserIDKey).(int64), newLink.ID, newLink.Link, cfg.LimitFree); err != nil {
 			utils.JSONError(w, types.ErrInternalServer, "Error tracking link", http.StatusInternalServerError)
 			return
 		} else if following == nil {

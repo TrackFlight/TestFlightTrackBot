@@ -29,7 +29,7 @@ ORDER BY chat_links.created_at;
 
 -- name: Track :one
 -- cache: type:remove table:chat_links key:chat_id fields:all_by_key
--- order: chat_id, link_id, link_url
+-- order: chat_id, link_id, link_url, free_limit
 WITH existing_link AS (
     SELECT id, app_id, status, last_availability
     FROM links as l
@@ -60,7 +60,7 @@ inserted_tracking AS (
     VALUES (
         @chat_id,
         (SELECT id FROM final_link),
-        (SELECT links_count FROM tracking) < 2
+        (SELECT links_count FROM tracking) <= @free_limit::bigint
     )
     ON CONFLICT (chat_id, link_id) DO NOTHING
     RETURNING link_id

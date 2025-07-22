@@ -14,8 +14,8 @@ func Load() (*Config, error) {
 		DBName:        os.Getenv("DB_NAME"),
 		TelegramToken: os.Getenv("TELEGRAM_TOKEN"),
 
-		LimitFree:          getEnvInt("LIMIT_FREE", 3),
-		LimitPremium:       getEnvInt("LIMIT_PREMIUM", 10),
+		LimitFree:          int64(getEnvInt("LIMIT_FREE", 3)),
+		LimitPremium:       int64(getEnvInt("LIMIT_PREMIUM", 10)),
 		PublicLinkMinUsers: getEnvInt("PUBLIC_LINK_MIN_USERS", 20),
 	}
 
