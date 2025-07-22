@@ -8,8 +8,7 @@ WITH upsert AS (
 )
 SELECT lang FROM upsert
 UNION
-SELECT lang FROM chats WHERE id = @id
-LIMIT 1;
+SELECT lang FROM chats WHERE id = @id;
 
 
 -- name: TrackedList :many
