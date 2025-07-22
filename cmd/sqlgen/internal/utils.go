@@ -256,7 +256,10 @@ func GetQueryOptions(query *Query) *QueryOptions {
 				case "fields":
 					options.Cache.Fields = value
 				case "ttl":
-					options.Cache.TTL, _ = strconv.ParseInt(value[0], 10, 64)
+					seconds, err := parseDurationToSeconds(value[0])
+					if err == nil && seconds > 0 {
+						options.Cache.TTL = seconds
+					}
 				}
 			}
 
@@ -357,4 +360,30 @@ func internalFindCompatible(tables []Table, tableName string, cols []Column) str
 		}
 	}
 	return ""
+}
+
+func parseDurationToSeconds(input string) (int64, error) {
+	re := regexp.MustCompile(`(?i)(\d+)\s*([wdhms])`)
+	matches := re.FindAllStringSubmatch(input, -1)
+
+	var totalSec int64
+	for _, m := range matches {
+		val, err := strconv.ParseInt(m[1], 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		switch strings.ToLower(m[2]) {
+		case "w":
+			totalSec += val * 7 * 24 * 3600
+		case "d":
+			totalSec += val * 24 * 3600
+		case "h":
+			totalSec += val * 3600
+		case "m":
+			totalSec += val * 60
+		case "s":
+			totalSec += val
+		}
+	}
+	return totalSec, nil
 }
