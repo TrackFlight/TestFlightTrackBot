@@ -93,7 +93,7 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 			utils.JSONError(w, types.ErrInternalServer, "Error tracking link", http.StatusInternalServerError)
 			return
 		} else if following == nil {
-			utils.JSONError(w, types.ErrAlreadyExists, "Link already tracked", http.StatusConflict)
+			utils.JSONError(w, types.ErrLinkAlreadyFollowing, "Link already tracked", http.StatusConflict)
 			return
 		} else {
 			w.Header().Set("Content-Type", "application/json")
@@ -104,6 +104,7 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 			}
 			_ = json.NewEncoder(w).Encode(types.Link{
 				ID:               following.ID,
+				AppID:            following.AppID.Int64,
 				Tag:              utils.EncodeTag(following.ID),
 				AppName:          following.AppName,
 				IconURL:          following.IconURL,

@@ -67,6 +67,7 @@ inserted_tracking AS (
 )
 SELECT
     inserted_tracking.link_id AS id,
+    apps.id AS app_id,
     apps.app_name,
     apps.icon_url,
     apps.description,

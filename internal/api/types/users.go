@@ -2,6 +2,7 @@ package types
 
 type Link struct {
 	ID               int64  `json:"id"`
+	AppID            int64  `json:"app_id"`
 	Tag              string `json:"tag"`
 	AppName          string `json:"app_name"`
 	IconURL          string `json:"icon_url"`

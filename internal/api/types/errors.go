@@ -1,11 +1,11 @@
 package types
 
 const (
-	ErrFloodWait      = "FLOODWAIT_X"
-	ErrUnauthorized   = "UNAUTHORIZED"
-	ErrBadRequest     = "BAD_REQUEST"
-	ErrInternalServer = "INTERNAL_SERVER_ERROR"
-	ErrAlreadyExists  = "ALREADY_EXISTS"
+	ErrFloodWait            = "FLOODWAIT_X"
+	ErrUnauthorized         = "UNAUTHORIZED"
+	ErrBadRequest           = "BAD_REQUEST"
+	ErrInternalServer       = "INTERNAL_SERVER_ERROR"
+	ErrLinkAlreadyFollowing = "LINK_ALREADY_FOLLOWING"
 )
 
 type ErrorResponse struct {
