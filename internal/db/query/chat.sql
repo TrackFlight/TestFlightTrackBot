@@ -54,6 +54,7 @@ tracking AS (
     FROM chat_links cl
     JOIN links l ON l.id = cl.link_id
     WHERE cl.chat_id = @chat_id
+    AND cl.allow_opened OR cl.allow_closed
 ),
 inserted_tracking AS (
     INSERT INTO chat_links (chat_id, link_id, allow_opened)
