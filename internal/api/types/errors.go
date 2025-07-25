@@ -6,6 +6,7 @@ const (
 	ErrBadRequest           = "BAD_REQUEST"
 	ErrInternalServer       = "INTERNAL_SERVER_ERROR"
 	ErrLinkAlreadyFollowing = "LINK_ALREADY_FOLLOWING"
+	ErrInvalidLanguageCode  = "INVALID_LANGUAGE_CODE"
 )
 
 type ErrorResponse struct {
