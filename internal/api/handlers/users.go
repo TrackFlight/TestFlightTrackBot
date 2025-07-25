@@ -24,25 +24,39 @@ func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 			utils.JSONError(w, types.ErrInternalServer, "Error fetching links", http.StatusInternalServerError)
 			return
 		}
-		var result []types.Link
+		var orderKeys []int64
+		result := make(map[int64]*types.App)
 		for _, item := range list {
+			if _, exists := result[item.AppID]; !exists {
+				result[item.AppID] = &types.App{
+					ID:          item.AppID,
+					Name:        item.AppName,
+					IconURL:     item.IconURL,
+					Description: item.Description,
+				}
+				orderKeys = append(orderKeys, item.AppID)
+			}
 			var timestamp int64
 			if item.LastAvailability.Valid {
 				timestamp = item.LastAvailability.Time.UTC().Unix()
 			}
-			result = append(result, types.Link{
+			result[item.AppID].Links = append(result[item.AppID].Links, types.Link{
 				ID:               item.ID,
-				Tag:              utils.EncodeTag(item.ID),
-				AppName:          item.AppName,
-				IconURL:          item.IconURL,
-				Description:      item.Description,
+				DisplayName:      utils.EncodeName(item.ID),
 				Status:           string(item.Status),
 				LastAvailability: timestamp,
 			})
 		}
+
+		var orderedResult []types.App
+		for _, key := range orderKeys {
+			if app, exists := result[key]; exists {
+				orderedResult = append(orderedResult, *app)
+			}
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(result)
+		_ = json.NewEncoder(w).Encode(orderedResult)
 	}
 }
 
@@ -102,15 +116,19 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 			if following.LastAvailability.Valid {
 				timestamp = following.LastAvailability.Time.UTC().Unix()
 			}
-			_ = json.NewEncoder(w).Encode(types.Link{
-				ID:               following.ID,
-				AppID:            following.AppID.Int64,
-				Tag:              utils.EncodeTag(following.ID),
-				AppName:          following.AppName,
-				IconURL:          following.IconURL,
-				Description:      following.Description,
-				Status:           string(following.Status),
-				LastAvailability: timestamp,
+			_ = json.NewEncoder(w).Encode(types.App{
+				ID:          following.AppID.Int64,
+				Name:        following.AppName,
+				IconURL:     following.IconURL,
+				Description: following.Description,
+				Links: []types.Link{
+					{
+						ID:               following.ID,
+						DisplayName:      utils.EncodeName(following.ID),
+						Status:           string(following.Status),
+						LastAvailability: timestamp,
+					},
+				},
 			})
 		}
 	}
