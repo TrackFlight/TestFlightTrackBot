@@ -14,6 +14,7 @@
   "HOME_TITLE": "Track Your Favorite Betas",
   "INVALID_LINK_FORMAT": "Invalid link. Try again.",
   "JOIN_BETA_BTN": "🔗 Join Beta",
+  "LAST_UPDATE_TIME": "last update {{.Time}}",
   "LINKS_HEADER": "Links",
   "LINK_ADDED": "Link added successfully!",
   "LINK_ALREADY_FOLLOWING": "Link Already Tracking",

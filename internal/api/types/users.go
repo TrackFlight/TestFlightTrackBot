@@ -13,6 +13,7 @@ type Link struct {
 	DisplayName      string `json:"display_name"`
 	Status           string `json:"status"`
 	LastAvailability int64  `json:"last_availability"`
+	LastUpdate       int64  `json:"last_update"`
 }
 
 type AddLinkRequest struct {

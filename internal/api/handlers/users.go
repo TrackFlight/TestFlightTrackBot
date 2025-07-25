@@ -43,6 +43,7 @@ func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 				DisplayName:      utils.EncodeName(item.ID),
 				Status:           string(item.Status),
 				LastAvailability: timestamp,
+				LastUpdate:       item.LastUpdate.Time.UTC().Unix(),
 			})
 		}
 
@@ -130,6 +131,7 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 						DisplayName:      utils.EncodeName(following.ID),
 						Status:           string(following.Status),
 						LastAvailability: timestamp,
+						LastUpdate:       following.LastUpdate.Time.UTC().Unix(),
 					},
 				},
 			})

@@ -20,7 +20,8 @@ SELECT
     apps.icon_url,
     apps.description,
     links.status,
-    links.last_availability
+    links.last_availability,
+    links.updated_at AS last_update
 FROM chat_links
 JOIN links ON chat_links.link_id = links.id
 JOIN apps ON links.app_id = apps.id
@@ -32,7 +33,7 @@ ORDER BY chat_links.created_at;
 -- cache: type:remove table:chat_links key:chat_id fields:all_by_key
 -- order: chat_id, link_id, link_url, free_limit
 WITH existing_link AS (
-    SELECT id, app_id, status, last_availability
+    SELECT id, app_id, status, last_availability, updated_at
     FROM links as l
     WHERE
         l.url = @link_url
@@ -74,7 +75,8 @@ SELECT
     apps.icon_url,
     apps.description,
     existing_link.status,
-    existing_link.last_availability
+    existing_link.last_availability,
+    existing_link.updated_at AS last_update
 FROM inserted_tracking
 LEFT JOIN existing_link ON existing_link.id = inserted_tracking.link_id
 LEFT JOIN apps ON apps.id = existing_link.app_id;
