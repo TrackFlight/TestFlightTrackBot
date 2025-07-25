@@ -9,7 +9,7 @@ require (
 	github.com/cretz/bine v0.2.0
 	github.com/go-chi/chi/v5 v5.2.2
 	github.com/golang-jwt/jwt/v5 v5.2.3
-	github.com/jackc/pgx/v5 v5.7.4
+	github.com/jackc/pgx/v5 v5.7.5
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/valkey-io/valkey-go v1.0.63
 	golang.org/x/text v0.27.0
