@@ -371,6 +371,16 @@ func GetSprintfFormatFromKey(query *Query, from string) string {
 	return ""
 }
 
+func GetArrays(query *Query) []Column {
+	var foundArrays []Column
+	for _, params := range query.Params {
+		if params.Column.IsArray {
+			foundArrays = append(foundArrays, params.Column)
+		}
+	}
+	return foundArrays
+}
+
 func IsBulkQuery(query *Query) bool {
 	foundBulk := false
 	invalidBulkQuery := false

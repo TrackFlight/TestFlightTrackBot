@@ -26,6 +26,7 @@ func ParseTemplates(schema Schema, templateDir string) *Templates {
 			return internalGoType(*query, true, false)
 		},
 		"IsBulkQuery":         IsBulkQuery,
+		"GetArrays":           GetArrays,
 		"GetParamsOrdered":    GetParamsOrdered,
 		"FilterColumnsByKeys": FilterColumnsByKeys,
 		"contains": func(s []string, e string) bool {

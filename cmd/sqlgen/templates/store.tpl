@@ -47,7 +47,8 @@ type {{$name}} struct {
 {{- end}}
 {{$queryName := .Name | ToCamelCase}}
 {{- $isMany := eq .Cmd ":many"}}
-{{- $isSingleBulk := eq (len .Params) 1}}
+{{- $arraysList := GetArrays .}}
+{{- $isSingleBulk := eq (len $arraysList) 1}}
 const {{$queryName}} = `{{.Text}}`
 {{- $returnName := printf "%s%sRow" .Name $rawName}}
 {{- $allowPointer := not $isMany}}
@@ -125,7 +126,7 @@ bulkParams []{{$bulkParamsName}}
         return {{ if and (not (eq .Cmd ":exec")) $hasResults -}}nil, {{end}}err
     }
     defer tx.Rollback(ctx.cx)
-    totalSize := len({{- if not $isSingleBulk }}bulkParams{{else}}{{(index .Params 0).Column.Name | ToCamelCase}}{{end}})
+    totalSize := len({{- if not $isSingleBulk }}bulkParams{{else}}{{(index $arraysList 0).Name | ToCamelCase}}{{end}})
     for start := 0; start < totalSize; start += batchMaxSize {
         end := start + batchMaxSize
         if end > totalSize {
