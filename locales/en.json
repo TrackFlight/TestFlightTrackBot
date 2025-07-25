@@ -47,6 +47,7 @@
   "TRACKING_REMOVED_ERROR": "‼️ \u003cb\u003eTracking Removed\u003c/b\u003e\nThe link you submitted was invalid and has been removed: \u003ccode\u003e{{.LinkURL}}\u003c/code\u003e.\n\n\u003ci\u003ePlease check the address and try again.\u003c/i\u003e",
   "TRACKING_STARTED": "👌 \u003cb\u003eTracking Started\u003c/b\u003e\nI will now monitor the TestFlight link you provided. You will receive updates when new slots are available.",
   "TRACKING_WAITING": "🚀 \u003cb\u003eI'm ready.\u003c/b\u003e\nSend me a TestFlight link or type the name of the app you want me to monitor.\n\n/cancel",
+  "TRACK_LINK_BTN": "Add Link",
   "UNDO_BTN": "Undo",
   "UNKNOWN_ERROR": "‼️ \u003cb\u003eUnknown Error\u003c/b\u003e\nAn unexpected issue occurred while processing your request. Please try again later or contact support."
 }
