@@ -382,6 +382,9 @@ func GetArrays(query *Query) []Column {
 }
 
 func IsBulkQuery(query *Query) bool {
+	if !strings.HasPrefix(strings.ToLower(query.Name), "bulk") {
+		return false
+	}
 	foundBulk := false
 	invalidBulkQuery := false
 	for i, params := range query.Params {
