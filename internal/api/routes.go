@@ -39,7 +39,7 @@ func Start(dbCtx *db.DB, cfg *config.Config) {
 			})
 
 			private.Route("/langpack", func(help chi.Router) {
-				help.Get("/strings", handlers.GetStrings(dbCtx))
+				help.Get("/", handlers.GetLangPack(dbCtx))
 			})
 		})
 	})

@@ -33,7 +33,11 @@ func GetLangPack(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		marshal, _ := json.Marshal(translator.LangPack(langCode))
-		_, _ = w.Write(marshal)
+		_ = json.NewEncoder(w).Encode(
+			types.LangPack{
+				LangCode: langCode,
+				Strings:  translator.LangPack(langCode),
+			},
+		)
 	}
 }
