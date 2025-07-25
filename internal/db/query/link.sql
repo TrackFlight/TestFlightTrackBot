@@ -4,15 +4,9 @@ FROM links
 JOIN chat_links ON chat_links.link_id = links.id;
 
 -- name: BulkDelete :many
-WITH input_data AS (
-    SELECT UNNEST(
-        @link_ids::bigint[]
-    )
-),
-deleted AS (
+WITH deleted AS (
     DELETE FROM links
-    USING input_data i
-    WHERE links.id = i.unnest
+    WHERE links.id = ANY(@link_ids::bigint[])
     RETURNING links.id AS link_id, links.url
 )
 SELECT chats.id AS chat_id, chats.lang, deleted.link_id, deleted.url AS link_url
