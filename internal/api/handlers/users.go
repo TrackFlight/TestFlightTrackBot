@@ -9,10 +9,8 @@ import (
 	"github.com/Laky-64/TestFlightTrackBot/internal/config"
 	"github.com/Laky-64/TestFlightTrackBot/internal/db"
 	"github.com/Laky-64/TestFlightTrackBot/internal/testflight"
-	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"net/http"
-	"strconv"
 )
 
 func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
@@ -60,15 +58,20 @@ func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func DeleteLink(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
+func DeleteLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		linkID, _ := strconv.Atoi(chi.URLParam(r, "linkID"))
-		if linkID == 0 {
-			utils.JSONError(w, types.ErrBadRequest, "Invalid link ID", http.StatusBadRequest)
+		var removeLinks []int64
+		if err := json.NewDecoder(r.Body).Decode(&removeLinks); err != nil {
+			utils.JSONError(w, types.ErrBadRequest, "Invalid request body", http.StatusBadRequest)
 			return
 		}
+		if len(removeLinks) == 0 {
+			utils.JSONError(w, types.ErrBadRequest, "No links provided", http.StatusBadRequest)
+			return
+		}
+		removeLinks = removeLinks[:min(len(removeLinks), 5)]
 
-		err := dbCtx.ChatStore.Delete(r.Context().Value(middleware.UserIDKey).(int64), int64(linkID))
+		err := dbCtx.ChatStore.Delete(r.Context().Value(middleware.UserIDKey).(int64), removeLinks)
 		if errors.Is(err, pgx.ErrNoRows) {
 			utils.JSONError(w, types.ErrBadRequest, "Link not found", http.StatusNotFound)
 			return

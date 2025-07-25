@@ -16,6 +16,7 @@ SELECT lang FROM chats WHERE id = @id;
 SELECT
     links.id,
     apps.app_name,
+    apps.id AS app_id,
     apps.icon_url,
     apps.description,
     links.status,
@@ -82,7 +83,7 @@ LEFT JOIN apps ON apps.id = existing_link.app_id;
 -- name: Delete :exec
 -- cache: type:remove table:chat_links key:chat_id fields:all_by_key
 DELETE FROM chat_links
-WHERE chat_id = @chat_id AND link_id = @link_id;
+WHERE chat_id = @chat_id AND link_id = ANY(@link_ids::bigint[]);
 
 
 -- name: BulkUpdateNotifications :many
