@@ -15,7 +15,7 @@ type Link struct {
 	LastAvailability int64  `json:"last_availability"`
 }
 
-type NewLink struct {
+type AddLinkRequest struct {
 	ID   int64  `json:"id"`
 	Link string `json:"link"`
 }

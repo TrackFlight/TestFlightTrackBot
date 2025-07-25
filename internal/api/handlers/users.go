@@ -83,7 +83,7 @@ func DeleteLink(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 
 func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var newLink types.NewLink
+		var newLink types.AddLinkRequest
 		if err := json.NewDecoder(r.Body).Decode(&newLink); err != nil {
 			utils.JSONError(w, types.ErrBadRequest, "Invalid request body", http.StatusBadRequest)
 			return
