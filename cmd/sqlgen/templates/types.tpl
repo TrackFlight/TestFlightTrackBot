@@ -2,7 +2,10 @@
 
 package models
 
-import "database/sql/driver"
+import (
+    "database/sql/driver"
+    "encoding/json"
+)
 {{ range .Enums -}}
 {{ $name := .Name | ToPascalCase }}
 type {{ $name }} string
@@ -27,14 +30,21 @@ func (e *{{ $name }}) Scan(value interface{}) error {
     return nil
 }
 
-func (ns {{ $name }}) Value() (driver.Value, error) {
-	if ns == "" {
+func (e {{ $name }}) Value() (driver.Value, error) {
+	if e == "" {
 		return nil, nil
 	}
-	return string(ns), nil
+	return string(e), nil
 }
 
 func (e {{ $name }}) IsNull() bool {
     return e == ""
+}
+
+func (src {{ $name }}) MarshalJSON() ([]byte, error) {
+	if src.IsNull() {
+		return []byte("null"), nil
+	}
+	return json.Marshal(string(src))
 }
 {{- end }}
