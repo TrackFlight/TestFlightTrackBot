@@ -63,7 +63,7 @@ inserted_tracking AS (
     VALUES (
         @chat_id,
         (SELECT id FROM final_link),
-        (SELECT links_count FROM tracking) <= @free_limit::bigint
+        (SELECT links_count FROM tracking) < @free_limit::bigint
     )
     ON CONFLICT (chat_id, link_id) DO NOTHING
     RETURNING link_id
