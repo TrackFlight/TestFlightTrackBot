@@ -15,6 +15,7 @@ SELECT lang FROM chats WHERE id = @id;
 -- cache: type:get table:chat_links key:chat_id version_by:links.id
 SELECT
     links.id,
+    REGEXP_REPLACE(links.url, '^https?://', '') AS link_url,
     apps.app_name,
     apps.id AS app_id,
     apps.icon_url,
@@ -33,7 +34,7 @@ ORDER BY chat_links.created_at;
 -- cache: type:remove table:chat_links key:chat_id fields:all_by_key
 -- order: chat_id, link_id, link_url, free_limit
 WITH existing_link AS (
-    SELECT id, app_id, status, last_availability, updated_at
+    SELECT id, url, app_id, status, last_availability, updated_at
     FROM links as l
     WHERE
         l.url = @link_url
@@ -44,12 +45,12 @@ inserted_link AS (
     INSERT INTO links (url)
     SELECT @link_url
     WHERE NOT EXISTS (SELECT 1 FROM existing_link)
-    RETURNING id
+    RETURNING id, url, updated_at
 ),
 final_link AS (
-    SELECT id FROM inserted_link
+    SELECT id, url, updated_at FROM inserted_link
     UNION ALL
-    SELECT id FROM existing_link
+    SELECT id, url, updated_at FROM existing_link
 ),
 tracking AS (
     SELECT COUNT(*) AS links_count
@@ -71,15 +72,17 @@ inserted_tracking AS (
 SELECT
     inserted_tracking.link_id AS id,
     apps.id AS app_id,
+    REGEXP_REPLACE(final_link.url, '^https?://', '') AS link_url,
     apps.app_name,
     apps.icon_url,
     apps.description,
     existing_link.status,
     existing_link.last_availability,
-    existing_link.updated_at AS last_update
+    final_link.updated_at AS last_update
 FROM inserted_tracking
 LEFT JOIN existing_link ON existing_link.id = inserted_tracking.link_id
-LEFT JOIN apps ON apps.id = existing_link.app_id;
+LEFT JOIN apps ON apps.id = existing_link.app_id
+LEFT JOIN final_link ON final_link.id = inserted_tracking.link_id;
 
 
 -- name: Delete :exec

@@ -51,7 +51,7 @@ func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 			}
 			result[key].Links = append(result[key].Links, types.Link{
 				ID:               item.ID,
-				DisplayName:      utils.EncodeName(item.ID),
+				URL:              item.LinkURL,
 				Status:           item.Status,
 				LastAvailability: timestamp,
 				LastUpdate:       item.LastUpdate.Time.UTC().Unix(),
@@ -139,7 +139,7 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 				Links: []types.Link{
 					{
 						ID:               following.ID,
-						DisplayName:      utils.EncodeName(following.ID),
+						URL:              following.LinkURL,
 						Status:           following.Status,
 						LastAvailability: timestamp,
 						LastUpdate:       following.LastUpdate.Time.UTC().Unix(),

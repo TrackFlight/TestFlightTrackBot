@@ -15,7 +15,7 @@ type App struct {
 
 type Link struct {
 	ID               int64                 `json:"id"`
-	DisplayName      string                `json:"display_name"`
+	URL              string                `json:"url"`
 	Status           models.LinkStatusEnum `json:"status"`
 	LastAvailability int64                 `json:"last_availability"`
 	LastUpdate       int64                 `json:"last_update"`
