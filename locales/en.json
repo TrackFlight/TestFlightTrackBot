@@ -1,5 +1,8 @@
 {
   "ADD_LINK_PROMPT": "Paste your TestFlight link below",
+  "APP_REMOVED_DESC_ONE": "You also removed {{.Amount}} associated link.",
+  "APP_REMOVED_DESC_OTHER": "You also removed {{.Amount}} associated links.",
+  "APP_REMOVED_TITLE": "App {{.AppName}} Removed",
   "BETA_CLOSED": "❌ \u003cb\u003eTestFlight beta for {{.AppName}} is now closed.\u003c/b\u003e\nThank you for your interest! Stay tuned for future updates and new beta opportunities.\n\n\u003ci\u003eFeel free to track another app!\u003c/i\u003e",
   "BETA_OPENED": "🟢 \u003cb\u003eTestFlight beta for {{.AppName}} is now open!\u003c/b\u003e\nAccess the official beta to explore upcoming features, submit feedback, and stay ahead of the curve.\n\n👉 \u003ci\u003eTap the button below to join.\u003c/i\u003e",
   "CLOSE_BTN": "🗑 Close",
@@ -24,6 +27,8 @@
   "NEW_VAR_ALREADY_EXISTS_ADM": "❗️ \u003cb\u003eVariable Already Exists\u003c/b\u003e\nThe variable \u003ccode\u003e{{.VarName}}\u003c/code\u003e is already defined. Use a different name or update its value.",
   "NEW_VAR_ERROR_USAGE_ADM": "‼️ \u003cb\u003eInvalid Usage of /add_var Command\u003c/b\u003e\nUse: \u003ccode\u003e/add_var VAR_NAME VAR_VALUE\u003c/code\u003e\nE.g.: \u003ccode\u003e/add_var fox_cheer Hello, crafty fox! ✨🦊\u003c/code\u003e",
   "NEW_VAR_SUCCESS_ADM": "✅ \u003cb\u003eVariable Added\u003c/b\u003e",
+  "REMOVE_APP_CONFIRM_DESC": "Are you sure you want to remove this app? All associated beta links will be deleted.",
+  "REMOVE_APP_CONFIRM_TITLE": "Remove App",
   "REMOVE_OR_EDIT_VAR_NOT_FOUND_ADM": "❗️ \u003cb\u003eVariable Not Found\u003c/b\u003e\nThe variable \u003ccode\u003e{{.VarName}}\u003c/code\u003e does not exist. Please check the name and try again.",
   "REMOVE_VAR_ERROR_USAGE_ADM": "‼️ \u003cb\u003eInvalid Usage of /remove_var Command\u003c/b\u003e\nUse: \u003ccode\u003e/remove_var VAR_NAME\u003c/code\u003e\nE.g.: \u003ccode\u003e/remove_var fox_cheer\u003c/code\u003e",
   "REMOVE_VAR_SUCCESS_ADM": "✅ \u003cb\u003eVariable Removed\u003c/b\u003e",
