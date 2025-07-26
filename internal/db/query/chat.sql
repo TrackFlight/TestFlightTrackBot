@@ -24,7 +24,7 @@ SELECT
     links.updated_at AS last_update
 FROM chat_links
 JOIN links ON chat_links.link_id = links.id
-JOIN apps ON links.app_id = apps.id
+LEFT JOIN apps ON links.app_id = apps.id
 WHERE chat_id = @chat_id
 ORDER BY chat_links.created_at;
 

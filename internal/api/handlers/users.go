@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/Laky-64/TestFlightTrackBot/internal/api/middleware"
 	"github.com/Laky-64/TestFlightTrackBot/internal/api/types"
 	"github.com/Laky-64/TestFlightTrackBot/internal/api/utils"
@@ -22,35 +23,45 @@ func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 			utils.JSONError(w, types.ErrInternalServer, "Error fetching links", http.StatusInternalServerError)
 			return
 		}
-		var orderKeys []int64
-		result := make(map[int64]*types.App)
+
+		noAppCounter := 0
+		var orderKeys []string
+		result := make(map[string]*types.App)
 		for _, item := range list {
-			if _, exists := result[item.AppID]; !exists {
-				result[item.AppID] = &types.App{
+			var key string
+			if item.AppID.Valid {
+				key = fmt.Sprintf("app_%d", item.AppID.Int64)
+			} else {
+				noAppCounter++
+				key = fmt.Sprintf("no_app_%d", noAppCounter)
+			}
+
+			if _, exists := result[key]; !exists {
+				result[key] = &types.App{
 					ID:          item.AppID,
 					Name:        item.AppName,
 					IconURL:     item.IconURL,
 					Description: item.Description,
 				}
-				orderKeys = append(orderKeys, item.AppID)
+				orderKeys = append(orderKeys, key)
 			}
 			var timestamp int64
 			if item.LastAvailability.Valid {
 				timestamp = item.LastAvailability.Time.UTC().Unix()
 			}
-			result[item.AppID].Links = append(result[item.AppID].Links, types.Link{
+			result[key].Links = append(result[key].Links, types.Link{
 				ID:               item.ID,
 				DisplayName:      utils.EncodeName(item.ID),
-				Status:           string(item.Status),
+				Status:           item.Status,
 				LastAvailability: timestamp,
 				LastUpdate:       item.LastUpdate.Time.UTC().Unix(),
 			})
 		}
 
-		var orderedResult []types.App
+		var orderedResult []*types.App
 		for _, key := range orderKeys {
 			if app, exists := result[key]; exists {
-				orderedResult = append(orderedResult, *app)
+				orderedResult = append(orderedResult, app)
 			}
 		}
 		w.Header().Set("Content-Type", "application/json")
@@ -121,7 +132,7 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 				timestamp = following.LastAvailability.Time.UTC().Unix()
 			}
 			_ = json.NewEncoder(w).Encode(types.App{
-				ID:          following.AppID.Int64,
+				ID:          following.AppID,
 				Name:        following.AppName,
 				IconURL:     following.IconURL,
 				Description: following.Description,
@@ -129,7 +140,7 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 					{
 						ID:               following.ID,
 						DisplayName:      utils.EncodeName(following.ID),
-						Status:           string(following.Status),
+						Status:           following.Status,
 						LastAvailability: timestamp,
 						LastUpdate:       following.LastUpdate.Time.UTC().Unix(),
 					},
