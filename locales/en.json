@@ -52,5 +52,6 @@
   "TRACKING_REMOVED_ERROR": "‼️ \u003cb\u003eTracking Removed\u003c/b\u003e\nThe link you submitted was invalid and has been removed: \u003ccode\u003e{{.LinkURL}}\u003c/code\u003e.\n\n\u003ci\u003ePlease check the address and try again.\u003c/i\u003e",
   "TRACK_LINK_BTN": "Add Link",
   "UNDO_BTN": "Undo",
+  "UNKNOWN_APP": "Unknown App",
   "UNKNOWN_ERROR": "‼️ \u003cb\u003eUnknown Error\u003c/b\u003e\nAn unexpected issue occurred while processing your request. Please try again later or contact support."
 }
