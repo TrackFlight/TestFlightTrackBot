@@ -65,7 +65,11 @@ func internalGoType(col Column, isSprint bool, isExternal bool) string {
 		if isSprint {
 			return "%s"
 		}
-		return "string"
+		if col.NotNull {
+			return "string"
+		} else {
+			return "pgtype.Text"
+		}
 	}
 	if name == "int4" || name == "int8" || name == "integer" || name == "bigint" || name == "serial" || name == "bigserial" {
 		if isSprint {
@@ -81,13 +85,21 @@ func internalGoType(col Column, isSprint bool, isExternal bool) string {
 		if isSprint {
 			return "%t"
 		}
-		return "bool"
+		if col.NotNull {
+			return "bool"
+		} else {
+			return "pgtype.Bool"
+		}
 	}
 	if name == "float4" || name == "float8" {
 		if isSprint {
 			return "%f"
 		}
-		return "float64"
+		if col.NotNull {
+			return "float64"
+		} else {
+			return "pgtype.Float8"
+		}
 	}
 	if name == "timestamptz" {
 		if isSprint {
