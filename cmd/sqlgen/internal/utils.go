@@ -71,7 +71,7 @@ func internalGoType(col Column, isSprint bool, isExternal bool) string {
 			return "pgtype.Text"
 		}
 	}
-	if name == "int4" || name == "int8" || name == "integer" || name == "bigint" || name == "serial" || name == "bigserial" {
+	if name == "int" || name == "int4" || name == "int8" || name == "integer" || name == "bigint" || name == "serial" || name == "bigserial" {
 		if isSprint {
 			return "%d"
 		}
