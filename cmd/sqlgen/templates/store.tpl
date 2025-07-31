@@ -26,6 +26,11 @@ type {{$name}} struct {
 {{- $tableSingularName := $cacheOptions.Table | Singular}}
 {{- $allowedGetCache := and $cacheOptions.Allow (not (eq .Cmd ":exec")) (eq $cacheOptions.Kind "get") (not $isBulk)}}
 {{- $allowedVersioning := and $allowedGetCache $cacheOptions.VersionBy}}
+{{- $allowedSplitCacheSave := and $allowedGetCache $cacheOptions.KeyColumn.IsArray}}
+{{- $filteredSplitCacheName := ""}}
+{{- if $allowedSplitCacheSave}}
+{{- $filteredSplitCacheName = printf "%sFiltered" ($cacheOptions.Key | ToCamelCase)}}
+{{- end}}
 {{- $allowedUpdateVersions := and (eq $cacheOptions.Kind "update_version") $isBulk}}
 {{- $isCacheKeyDummy := and (contains $queryOptions.Exclude ($cacheOptions.Key | Singular)) $allowedUpdateVersions}}
 {{- $allowedDummy := and (gt (sub (len .Columns) (len $filteredColumns) (bool_to_int $isCacheKeyDummy)) 0)}}
@@ -134,7 +139,7 @@ bulkParams []{{$bulkParamsName}}
         }
     {{- end}}
     {{- if or $allowedGetCache (eq $cacheOptions.Kind "remove")}}
-    {{- if not (and (contains $cacheOptions.Fields "all") (eq (len $cacheOptions.Fields) 1))}}
+    {{- if not (or (and (contains $cacheOptions.Fields "all") (eq (len $cacheOptions.Fields) 1)) $allowedSplitCacheSave)}}
     {{- if $cacheOptions.Key}}
     valkeyKey := fmt.Sprintf("{{$tableSingularName}}:{{GetSprintfFormatFromKey . $cacheOptions.Key}}", {{$cacheOptions.Key | ToCamelCase}})
     {{- else}}
@@ -143,17 +148,46 @@ bulkParams []{{$bulkParamsName}}
     {{- end }}
     {{- end }}
     {{- if $allowedGetCache}}
-    valkeyField := "{{if eq (len .Columns) 1}}{{(index .Columns 0).Name}}{{else}}{{- if and $cacheOptions.Key (not $isMany)}}__row{{else}}__all{{- end -}}{{- end -}}"
+    valkeyField := "{{if eq (len .Columns) 1}}{{(index .Columns 0).Name}}{{else}}{{- if and $cacheOptions.Key (or (not $isMany) $allowedSplitCacheSave)}}__row{{else}}__all{{- end -}}{{- end -}}"
     {{- if $allowedVersioning}}
     valkeyVersionField := "__versions"
     {{- end}}
+    {{- if $allowedSplitCacheSave}}
+    var cmdList []valkey.Completed
+    for _, x := range {{$cacheOptions.Key | ToCamelCase}} {
+        cmdList = append(
+            cmdList,
+            ctx.redis.B().Hget().Key(
+                fmt.Sprintf("{{$tableSingularName}}:{{GetSprintfFormatFromKey . $cacheOptions.Key}}", x),
+            ).Field(valkeyField).Build(),
+        )
+    }
+    {{- end}}
     res := ctx.redis.DoMulti(
         ctx.cx,
+        {{- if $allowedSplitCacheSave}}
+        cmdList...
+        {{- else}}
         ctx.redis.B().Hget().Key(valkeyKey).Field(valkeyField).Build(),
+        {{- end}}
         {{- if $allowedVersioning}}
         ctx.redis.B().Hget().Key(valkeyKey).Field(valkeyVersionField).Build(),
         {{- end}}
     )
+    {{- if $allowedSplitCacheSave}}
+    var {{$filteredSplitCacheName}} []{{ToGoType $cacheOptions.KeyColumn true}}
+    for idx, r := range res {
+    	if r.Error() == nil {
+    		var item {{$returnName}}
+    		if err := r.DecodeJSON(&item); err == nil {
+    			i = append(i, item)
+    			continue
+    		}
+    	}
+    	{{$filteredSplitCacheName}} = append({{$filteredSplitCacheName}}, {{$cacheOptions.Key | ToCamelCase}}[idx])
+    }
+    {{- end}}
+    {{- if not $allowedSplitCacheSave}}
     if res[0].Error() == nil {{- if $allowedVersioning}} && res[1].Error() == nil{{- end}} {
         {{- if $allowedVersioning}}
         var vMap map[{{$versionType}}]int64
@@ -189,6 +223,7 @@ bulkParams []{{$bulkParamsName}}
         {{- end}}
     }
     {{- end }}
+    {{- end }}
     {{- if $allowedVersioning}}
     var versionKeys []string
     {{- end}}
@@ -208,7 +243,7 @@ bulkParams []{{$bulkParamsName}}
         ctx.cx,
         {{$queryName}},
         {{- range .Params}}
-        {{.Column.Name | ToCamelCase}}{{ if and $isBulk .Column.IsArray }}[start:end]{{end}},
+        {{.Column.Name | ToCamelCase}}{{ if and $isBulk .Column.IsArray }}[start:end]{{end}}{{if and $allowedSplitCacheSave (eq .Column.Name $cacheOptions.Key)}}Filtered{{- end}},
         {{- end }}
     )
     {{- if not (eq .Cmd ":exec")}}
@@ -303,17 +338,47 @@ bulkParams []{{$bulkParamsName}}
         }
     {{- end}}
     {{- if $allowedGetCache}}
+    {{- if not $allowedSplitCacheSave}}
     jsonData, err := json.Marshal(i)
     if err != nil {
         return {{if or $allowPointer $isMany}}nil{{else}}i{{end}}, err
     }
+    {{- else}}
+    var orderedI []{{$returnName}}
+    var cmdSaveList []valkey.Completed
+    for _, r := range {{$cacheOptions.Key | ToCamelCase}} {
+        for _, item := range i {
+		    {{- $keyElement := printf "item.%s" ($cacheOptions.Key | ToPascalCase | Singular | ToGoCase) }}
+            if {{$keyElement}} == r {
+		        if slices.Contains({{$filteredSplitCacheName}}, {{$keyElement}}) {
+		            jsonData, err := json.Marshal(item)
+                    if err != nil {
+                        return nil, err
+                    }
+                    valkeyKey := fmt.Sprintf("{{$tableSingularName}}:{{GetSprintfFormatFromKey . $cacheOptions.Key}}", {{$keyElement}})
+		            cmdSaveList = append(
+		                cmdSaveList,
+		                ctx.redis.B().Hset().Key(valkeyKey).FieldValue().FieldValue(valkeyField, string(jsonData)).Build(),
+		                ctx.redis.B().Expire().Key(valkeyKey).Seconds({{$cacheOptions.TTL}}).Build(),
+		            )
+		        }
+		        orderedI = append(orderedI, item)
+		        break
+		    }
+		}
+    }
+    {{- end}}
     ctx.redis.DoMulti(
         ctx.cx,
+        {{- if $allowedSplitCacheSave}}
+        cmdSaveList...,
+        {{- else}}
         ctx.redis.B().Hset().Key(valkeyKey).FieldValue().FieldValue(valkeyField, string(jsonData)).Build(),
         {{- if $allowedVersioning }}
         ctx.redis.B().Hset().Key(valkeyKey).FieldValue().FieldValue(valkeyVersionField, string(jsonVer)).Build(),
         {{- end}}
         ctx.redis.B().Expire().Key(valkeyKey).Seconds({{$cacheOptions.TTL}}).Build(),
+        {{- end}}
     )
     {{- else if eq $cacheOptions.Kind "remove"}}
     ctx.redis.Do{{- if gt (len $cacheOptions.Fields) 1 }}Multi{{end}}(

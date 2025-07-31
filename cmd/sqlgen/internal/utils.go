@@ -144,6 +144,23 @@ func DetectQueryImports(tables []Table, queries []Query) []string {
 			imports["slices"] = struct{}{}
 			imports["maps"] = struct{}{}
 		}
+		if queryOptions.Cache.KeyColumn != nil && queryOptions.Cache.KeyColumn.IsArray {
+			if query.Cmd != ":many" {
+				gologging.FatalF("query %s has array key column but is not a :many query", query.Name)
+			}
+			foundKey := false
+			singularKeyName := Singular(queryOptions.Cache.Key)
+			for _, column := range query.Columns {
+				if column.Name == singularKeyName {
+					foundKey = true
+					break
+				}
+			}
+			if !foundKey {
+				gologging.FatalF("query %s has array key column %s but it is not present in the query results", query.Name, singularKeyName)
+			}
+			imports["slices"] = struct{}{}
+		}
 		var columnParams []Column
 		for _, param := range query.Params {
 			columnParams = append(columnParams, param.Column)
