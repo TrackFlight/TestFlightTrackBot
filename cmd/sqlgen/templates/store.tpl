@@ -227,6 +227,9 @@ bulkParams []{{$bulkParamsName}}
     {{- if $allowedVersioning}}
     var versionKeys []string
     {{- end}}
+    {{- if $allowedSplitCacheSave}}
+    if len(entityIdsFiltered) > 0 {
+    {{- end}}
     {{if eq .Cmd ":one" -}}
     row
     {{- else if $isMany -}}
@@ -425,6 +428,9 @@ bulkParams []{{$bulkParamsName}}
     }
     ctx.redis.DoMulti(ctx.cx, cmdList...)
     {{- end}}
+    {{- end}}
+    {{- if $allowedSplitCacheSave}}
+    }
     {{- end}}
     return {{ if and (not (eq .Cmd ":exec")) $hasResults -}}{{if $allowPointer -}}&{{- end -}}i, {{end}}nil
 }
