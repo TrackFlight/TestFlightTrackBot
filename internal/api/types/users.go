@@ -6,10 +6,11 @@ import (
 )
 
 type App struct {
-	ID          pgtype.Int8 `json:"id"`
+	ID          int64       `json:"id"`
 	Name        pgtype.Text `json:"name"`
 	IconURL     pgtype.Text `json:"icon_url"`
 	Description pgtype.Text `json:"description"`
+	Followers   int64       `json:"followers"`
 	Links       []Link      `json:"links"`
 }
 

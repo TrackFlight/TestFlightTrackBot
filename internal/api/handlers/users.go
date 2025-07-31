@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/Laky-64/TestFlightTrackBot/internal/api/middleware"
 	"github.com/Laky-64/TestFlightTrackBot/internal/api/types"
 	"github.com/Laky-64/TestFlightTrackBot/internal/api/utils"
@@ -23,25 +22,20 @@ func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 			utils.JSONError(w, types.ErrInternalServer, "Error fetching links", http.StatusInternalServerError)
 			return
 		}
-
-		noAppCounter := 0
-		var orderKeys []string
-		result := make(map[string]*types.App)
+		var entityIDs []int64
+		var orderKeys []int64
+		result := make(map[int64]*types.App)
 		for _, item := range list {
-			var key string
+			var key int64
 			if item.AppID.Valid {
-				key = fmt.Sprintf("app_%d", item.AppID.Int64)
+				key = item.AppID.Int64
 			} else {
-				noAppCounter++
-				key = fmt.Sprintf("no_app_%d", noAppCounter)
+				key = -item.ID
 			}
-
 			if _, exists := result[key]; !exists {
+				entityIDs = append(entityIDs, key)
 				result[key] = &types.App{
-					ID:          item.AppID,
-					Name:        item.AppName,
-					IconURL:     item.IconURL,
-					Description: item.Description,
+					ID: key,
 				}
 				orderKeys = append(orderKeys, key)
 			}
@@ -56,6 +50,23 @@ func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 				LastAvailability: timestamp,
 				LastUpdate:       item.LastUpdate.Time.UTC().Unix(),
 			})
+		}
+
+		if len(entityIDs) > 0 {
+			entityList, errAppList := dbCtx.AppStore.GetAppsInfo(
+				entityIDs,
+			)
+			if errAppList != nil {
+				utils.JSONError(w, types.ErrInternalServer, "Error fetching apps info", http.StatusInternalServerError)
+				return
+			}
+			for _, entityInfo := range entityList {
+				entity := result[entityInfo.EntityID]
+				entity.Name = entityInfo.AppName
+				entity.IconURL = entityInfo.IconURL
+				entity.Description = entityInfo.Description
+				entity.Followers = entityInfo.Followers
+			}
 		}
 
 		var orderedResult []*types.App
@@ -131,8 +142,14 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 			if following.LastAvailability.Valid {
 				timestamp = following.LastAvailability.Time.UTC().Unix()
 			}
+			var entityID int64
+			if following.AppID.Valid {
+				entityID = following.AppID.Int64
+			} else {
+				entityID = -following.ID
+			}
 			_ = json.NewEncoder(w).Encode(types.App{
-				ID:          following.AppID,
+				ID:          entityID,
 				Name:        following.AppName,
 				IconURL:     following.IconURL,
 				Description: following.Description,

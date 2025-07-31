@@ -16,16 +16,12 @@ SELECT lang FROM chats WHERE id = @id;
 SELECT
     links.id,
     REGEXP_REPLACE(links.url, '^https?://', '') AS link_url,
-    apps.app_name,
-    apps.id AS app_id,
-    apps.icon_url,
-    apps.description,
+    links.app_id,
     links.status,
     links.last_availability,
     links.updated_at AS last_update
 FROM chat_links
 JOIN links ON chat_links.link_id = links.id
-LEFT JOIN apps ON links.app_id = apps.id
 WHERE chat_id = @chat_id
 ORDER BY chat_links.created_at;
 
