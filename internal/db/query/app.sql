@@ -31,15 +31,19 @@ ORDER BY a.l_value, la.followers DESC;
 -- name: GetAppsInfo :many
 -- cache: type:get table:apps key:entity_ids ttl:30m
 WITH
+app_ids AS (
+    SELECT ABS(x) AS id FROM unnest(@entity_ids::bigint[]) x WHERE x >= 0
+),
+link_ids AS (
+    SELECT ABS(x) AS id FROM unnest(@entity_ids::bigint[]) x WHERE x < 0
+),
 link_follower_counts AS (
     SELECT
-        id,
+        links.id,
         COUNT(DISTINCT cl.chat_id) AS followers
     FROM links
     JOIN chat_links cl ON cl.link_id = links.id
-    WHERE links.id = ANY(ARRAY(
-        SELECT ABS(x) FROM unnest(@entity_ids::bigint[]) x WHERE x < 0
-    ))
+    JOIN link_ids ON link_ids.id = links.id
     GROUP BY links.id
 ),
 app_follower_counts AS (
@@ -48,13 +52,14 @@ app_follower_counts AS (
         apps.app_name,
         apps.icon_url,
         apps.description,
-        COUNT(DISTINCT chat_links.chat_id) AS followers
+        (
+            SELECT COUNT(DISTINCT cl.chat_id)
+            FROM links l
+            JOIN chat_links cl ON cl.link_id = l.id
+            WHERE l.app_id = apps.id
+        ) AS followers
     FROM apps
-    JOIN links ON links.app_id = apps.id
-    JOIN chat_links ON chat_links.link_id = links.id
-    WHERE apps.id = ANY(ARRAY(
-        SELECT ABS(x) FROM unnest(@entity_ids::bigint[]) x WHERE x >= 0
-    ))
+    JOIN app_ids ON app_ids.id = apps.id
     GROUP BY apps.id
 )
 SELECT

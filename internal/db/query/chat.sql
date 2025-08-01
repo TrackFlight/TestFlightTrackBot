@@ -14,9 +14,9 @@ SELECT lang FROM chats WHERE id = @id;
 -- name: TrackedList :many
 -- cache: type:get table:chat_links key:chat_id version_by:links.id
 SELECT
-    links.id,
+    links.id AS id,
     REGEXP_REPLACE(links.url, '^https?://', '') AS link_url,
-    links.app_id,
+    COALESCE(links.app_id, -links.id)::bigint AS entity_id,
     links.status,
     links.last_availability,
     links.updated_at AS last_update
@@ -67,7 +67,7 @@ inserted_tracking AS (
 )
 SELECT
     inserted_tracking.link_id AS id,
-    apps.id AS app_id,
+    COALESCE(existing_link.app_id, -inserted_tracking.link_id)::bigint AS entity_id,
     REGEXP_REPLACE(final_link.url, '^https?://', '') AS link_url,
     apps.app_name,
     apps.icon_url,
@@ -84,7 +84,8 @@ LEFT JOIN final_link ON final_link.id = inserted_tracking.link_id;
 -- name: Delete :exec
 -- cache: type:remove table:chat_links key:chat_id fields:all_by_key
 DELETE FROM chat_links
-WHERE chat_id = @chat_id AND link_id = ANY(@link_ids::bigint[]);
+WHERE chat_id = @chat_id
+AND -link_id = ANY(@link_ids::bigint[]);
 
 
 -- name: BulkUpdateNotifications :many

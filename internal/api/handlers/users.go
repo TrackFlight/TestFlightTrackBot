@@ -10,7 +10,9 @@ import (
 	"github.com/Laky-64/TestFlightTrackBot/internal/db"
 	"github.com/Laky-64/TestFlightTrackBot/internal/testflight"
 	"github.com/jackc/pgx/v5"
+	"maps"
 	"net/http"
+	"slices"
 )
 
 func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
@@ -22,28 +24,20 @@ func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 			utils.JSONError(w, types.ErrInternalServer, "Error fetching links", http.StatusInternalServerError)
 			return
 		}
-		var entityIDs []int64
 		var orderKeys []int64
 		result := make(map[int64]*types.App)
 		for _, item := range list {
-			var key int64
-			if item.AppID.Valid {
-				key = item.AppID.Int64
-			} else {
-				key = -item.ID
-			}
-			if _, exists := result[key]; !exists {
-				entityIDs = append(entityIDs, key)
-				result[key] = &types.App{
-					ID: key,
+			if _, exists := result[item.EntityID]; !exists {
+				result[item.EntityID] = &types.App{
+					ID: item.EntityID,
 				}
-				orderKeys = append(orderKeys, key)
+				orderKeys = append(orderKeys, item.EntityID)
 			}
 			var timestamp int64
 			if item.LastAvailability.Valid {
 				timestamp = item.LastAvailability.Time.UTC().Unix()
 			}
-			result[key].Links = append(result[key].Links, types.Link{
+			result[item.EntityID].Links = append(result[item.EntityID].Links, types.Link{
 				ID:               item.ID,
 				URL:              item.LinkURL,
 				Status:           item.Status,
@@ -52,9 +46,9 @@ func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 
-		if len(entityIDs) > 0 {
+		if len(result) > 0 {
 			entityList, errAppList := dbCtx.AppStore.GetAppsInfo(
-				entityIDs,
+				slices.Collect(maps.Keys(result)),
 			)
 			if errAppList != nil {
 				utils.JSONError(w, types.ErrInternalServer, "Error fetching apps info", http.StatusInternalServerError)
@@ -142,14 +136,8 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 			if following.LastAvailability.Valid {
 				timestamp = following.LastAvailability.Time.UTC().Unix()
 			}
-			var entityID int64
-			if following.AppID.Valid {
-				entityID = following.AppID.Int64
-			} else {
-				entityID = -following.ID
-			}
 			_ = json.NewEncoder(w).Encode(types.App{
-				ID:          entityID,
+				ID:          following.EntityID,
 				Name:        following.AppName,
 				IconURL:     following.IconURL,
 				Description: following.Description,
