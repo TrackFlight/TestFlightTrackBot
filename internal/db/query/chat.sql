@@ -69,15 +69,11 @@ SELECT
     inserted_tracking.link_id AS id,
     COALESCE(existing_link.app_id, -inserted_tracking.link_id)::bigint AS entity_id,
     REGEXP_REPLACE(final_link.url, '^https?://', '') AS link_url,
-    apps.app_name,
-    apps.icon_url,
-    apps.description,
     existing_link.status,
     existing_link.last_availability,
     final_link.updated_at AS last_update
 FROM inserted_tracking
 LEFT JOIN existing_link ON existing_link.id = inserted_tracking.link_id
-LEFT JOIN apps ON apps.id = existing_link.app_id
 LEFT JOIN final_link ON final_link.id = inserted_tracking.link_id;
 
 
@@ -85,7 +81,7 @@ LEFT JOIN final_link ON final_link.id = inserted_tracking.link_id;
 -- cache: type:remove table:chat_links key:chat_id fields:all_by_key
 DELETE FROM chat_links
 WHERE chat_id = @chat_id
-AND -link_id = ANY(@link_ids::bigint[]);
+AND link_id = ANY(@link_ids::bigint[]);
 
 
 -- name: BulkUpdateNotifications :many

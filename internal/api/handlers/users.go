@@ -136,11 +136,20 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 			if following.LastAvailability.Valid {
 				timestamp = following.LastAvailability.Time.UTC().Unix()
 			}
+			entityList, errAppInfo := dbCtx.AppStore.GetAppsInfo(
+				[]int64{following.EntityID},
+			)
+			if errAppInfo != nil || len(entityList) == 0 {
+				utils.JSONError(w, types.ErrInternalServer, "Error fetching apps info", http.StatusInternalServerError)
+				return
+			}
+			entityInfo := entityList[0]
 			_ = json.NewEncoder(w).Encode(types.App{
 				ID:          following.EntityID,
-				Name:        following.AppName,
-				IconURL:     following.IconURL,
-				Description: following.Description,
+				Name:        entityInfo.AppName,
+				IconURL:     entityInfo.IconURL,
+				Description: entityInfo.Description,
+				Followers:   entityInfo.Followers,
 				Links: []types.Link{
 					{
 						ID:               following.ID,
