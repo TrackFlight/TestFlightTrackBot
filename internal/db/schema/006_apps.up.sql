@@ -2,9 +2,9 @@
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS apps (
     id          BIGSERIAL PRIMARY KEY,
-    app_name    VARCHAR(255) NOT NULL CONSTRAINT uni_apps_app_name UNIQUE,
-    description TEXT NOT NULL,
-    icon_url    VARCHAR(255) NOT NULL,
+    app_name    VARCHAR(255) NOT NULL UNIQUE,
+    description TEXT,
+    icon_url    VARCHAR(255),
     created_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );

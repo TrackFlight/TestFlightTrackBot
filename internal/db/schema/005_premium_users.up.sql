@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS premium_users (
-    chat_id    BIGINT PRIMARY KEY CONSTRAINT fk_premium_users_chat REFERENCES chats ON DELETE CASCADE,
+    chat_id    BIGINT PRIMARY KEY REFERENCES chats(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );

@@ -1,8 +1,8 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS chat_links (
-    chat_id              BIGINT NOT NULL CONSTRAINT fk_chat_links_chat REFERENCES chats ON DELETE CASCADE,
-    link_id              BIGINT NOT NULL CONSTRAINT fk_chat_links_link REFERENCES links ON DELETE CASCADE,
+    chat_id              BIGINT NOT NULL REFERENCES chats(id) ON DELETE CASCADE,
+    link_id              BIGINT NOT NULL REFERENCES links(id) ON DELETE CASCADE,
     allow_opened         BOOLEAN DEFAULT true NOT NULL,
     allow_closed         BOOLEAN DEFAULT false NOT NULL,
     last_notified_status link_status_enum,
