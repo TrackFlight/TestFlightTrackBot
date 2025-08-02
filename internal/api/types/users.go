@@ -18,6 +18,7 @@ type Link struct {
 	ID               int64                 `json:"id"`
 	URL              string                `json:"url"`
 	Status           models.LinkStatusEnum `json:"status"`
+	IsPublic         bool                  `json:"is_public"`
 	LastAvailability int64                 `json:"last_availability"`
 	LastUpdate       int64                 `json:"last_update"`
 }

@@ -12,5 +12,5 @@ type Config struct {
 	LimitFree    int64
 	LimitPremium int64
 
-	PublicLinkMinUsers int
+	PublicLinkMinUsers int64
 }

@@ -1,7 +1,17 @@
 -- name: GetUsedLinks :many
-SELECT DISTINCT ON (links.id) links.id, links.url, links.app_id, links.status
+SELECT
+    links.id,
+    links.url,
+    links.app_id,
+    links.status,
+    CASE
+    WHEN COUNT(chat_links.chat_id) > @min_public::bigint THEN TRUE
+    WHEN links.is_public THEN TRUE
+    ELSE FALSE
+    END AS is_public
 FROM links
-JOIN chat_links ON chat_links.link_id = links.id;
+JOIN chat_links ON chat_links.link_id = links.id
+GROUP BY links.id, links.url, links.app_id, links.status;
 
 -- name: BulkDelete :many
 WITH deleted AS (
@@ -22,7 +32,8 @@ WITH input_data AS (
     SELECT
         UNNEST(@link_ids::bigint[]) AS link_id,
         UNNEST(@app_names::text[]) AS app_name,
-        UNNEST(@statuses::link_status_enum[]) AS status
+        UNNEST(@statuses::link_status_enum[]) AS status,
+        UNNEST(@is_public::boolean[]) AS is_public
 )
 UPDATE links
 SET status = i.status,
@@ -31,11 +42,13 @@ SET status = i.status,
     last_availability = CASE
     WHEN i.status = 'available' THEN NOW()
         ELSE links.last_availability
-    END
+    END,
+    is_public = i.is_public
 FROM input_data i
 LEFT JOIN apps ON apps.app_name = i.app_name
 WHERE links.id = i.link_id
 AND (
     links.status IS DISTINCT FROM i.status
     OR links.app_id IS DISTINCT FROM apps.id
+    OR links.is_public IS DISTINCT FROM i.is_public
 ) RETURNING links.id AS link_id;

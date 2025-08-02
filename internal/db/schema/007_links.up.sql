@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS links (
     url               VARCHAR(255) NOT NULL CONSTRAINT uni_links_url UNIQUE,
     app_id            BIGINT CONSTRAINT fk_links_app REFERENCES apps ON DELETE CASCADE,
     status            link_status_enum,
+    is_public         BOOLEAN NOT NULL DEFAULT FALSE,
     last_availability TIMESTAMP WITH TIME ZONE,
     created_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
     updated_at        TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()

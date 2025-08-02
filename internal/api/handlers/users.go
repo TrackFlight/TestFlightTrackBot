@@ -41,6 +41,7 @@ func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 				ID:               item.ID,
 				URL:              item.LinkURL,
 				Status:           item.Status,
+				IsPublic:         item.IsPublic,
 				LastAvailability: timestamp,
 				LastUpdate:       item.LastUpdate.Time.UTC().Unix(),
 			})
@@ -155,6 +156,7 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 						ID:               following.ID,
 						URL:              following.LinkURL,
 						Status:           following.Status,
+						IsPublic:         following.IsPublic,
 						LastAvailability: timestamp,
 						LastUpdate:       following.LastUpdate.Time.UTC().Unix(),
 					},

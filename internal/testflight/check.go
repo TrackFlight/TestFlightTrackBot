@@ -6,10 +6,23 @@ import (
 	"github.com/Laky-64/TestFlightTrackBot/internal/db/models"
 	"github.com/Laky-64/TestFlightTrackBot/internal/tor"
 	"github.com/Laky-64/TestFlightTrackBot/internal/utils"
+	"github.com/Laky-64/http"
 	"sync"
 )
 
 func (c *Client) Check(links []db.GetUsedLinksLinkRow) (map[string]Result, error) {
+	request, err := http.ExecuteRequest(AwesomeTestFlightURL)
+	if err != nil {
+		return nil, err
+	}
+	if request.StatusCode != 200 {
+		return nil, errors.New("failed to fetch awesome testflight links")
+	}
+	awesomeList := RegexAwesomeTestFlight.FindAllStringSubmatch(request.String(), -1)
+	awesomeAppNames := make(map[string]string)
+	for _, item := range awesomeList {
+		awesomeAppNames[item[3]] = item[2]
+	}
 	transaction, err := c.TorClient.NewTransaction(len(links))
 	if err != nil {
 		return nil, err
@@ -49,6 +62,7 @@ func (c *Client) Check(links []db.GetUsedLinksLinkRow) (map[string]Result, error
 				}
 				var appName, appIcon, description string
 				var status models.LinkStatusEnum
+				var isPublic bool
 				rawAppName := RegexAppName.FindAllStringSubmatch(bodyString, -1)
 				if len(rawAppName) == 0 {
 					status = models.LinkStatusEnumClosed
@@ -63,11 +77,19 @@ func (c *Client) Check(links []db.GetUsedLinksLinkRow) (map[string]Result, error
 					appIcon = RegexAppIcon.FindStringSubmatch(bodyString)[1]
 					description = RegexDescription.FindStringSubmatch(bodyString)[1]
 				}
+				if awesomeAppName, exists := awesomeAppNames[link.URL]; exists {
+					if len(appName) == 0 {
+						appName = awesomeAppName
+					}
+					isPublic = true
+				}
+
 				results[link.URL] = Result{
 					AppName:     appName,
 					IconURL:     appIcon,
 					Description: description,
 					Status:      status,
+					IsPublic:    isPublic,
 				}
 				mu.Unlock()
 				return

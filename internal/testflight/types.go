@@ -11,5 +11,6 @@ type Result struct {
 	AppName     string
 	IconURL     string
 	Description string
+	IsPublic    bool
 	Status      models.LinkStatusEnum
 }

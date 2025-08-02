@@ -19,7 +19,8 @@ SELECT
     COALESCE(links.app_id, -links.id)::bigint AS entity_id,
     links.status,
     links.last_availability,
-    links.updated_at AS last_update
+    links.updated_at AS last_update,
+    links.is_public
 FROM chat_links
 JOIN links ON chat_links.link_id = links.id
 WHERE chat_id = @chat_id
@@ -30,7 +31,7 @@ ORDER BY chat_links.created_at;
 -- cache: type:remove table:chat_links key:chat_id fields:all_by_key
 -- order: chat_id, link_id, link_url, free_limit
 WITH existing_link AS (
-    SELECT id, url, app_id, status, last_availability, updated_at
+    SELECT id, url, app_id, status, is_public, last_availability, updated_at
     FROM links as l
     WHERE
         l.url = @link_url
@@ -71,6 +72,7 @@ SELECT
     REGEXP_REPLACE(final_link.url, '^https?://', '') AS link_url,
     existing_link.status,
     existing_link.last_availability,
+    COALESCE(existing_link.is_public, false)::boolean AS is_public,
     final_link.updated_at AS last_update
 FROM inserted_tracking
 LEFT JOIN existing_link ON existing_link.id = inserted_tracking.link_id

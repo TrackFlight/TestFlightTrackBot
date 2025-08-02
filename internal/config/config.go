@@ -16,7 +16,7 @@ func Load() (*Config, error) {
 
 		LimitFree:          int64(getEnvInt("LIMIT_FREE", 3)),
 		LimitPremium:       int64(getEnvInt("LIMIT_PREMIUM", 10)),
-		PublicLinkMinUsers: getEnvInt("PUBLIC_LINK_MIN_USERS", 20),
+		PublicLinkMinUsers: int64(getEnvInt("PUBLIC_LINK_MIN_USERS", 20)),
 	}
 
 	if len(cfg.DBUser) == 0 {

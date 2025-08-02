@@ -29,7 +29,7 @@ func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.B
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			usedLinks, err := dbCtx.LinkStore.GetUsedLinks()
+			usedLinks, err := dbCtx.LinkStore.GetUsedLinks(cfg.PublicLinkMinUsers)
 			if err != nil {
 				gologging.ErrorF("cleanup find: %v", err)
 				continue
@@ -46,6 +46,7 @@ func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.B
 			var removeLinks []int64
 			for _, link := range usedLinks {
 				checked := checkedLinks[link.URL]
+				newPublicStatus := link.IsPublic || checked.IsPublic
 				if checked.Error != nil {
 					continue
 				}
@@ -61,12 +62,15 @@ func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.B
 						Description: checked.Description,
 					}
 				}
-				if checked.Status != link.Status {
+				if checked.Status != link.Status || link.IsPublic != newPublicStatus {
 					updates = append(updates, db.BulkUpdateLinkParams{
-						LinkID:  link.ID,
-						AppName: checked.AppName,
-						Status:  checked.Status,
+						LinkID:   link.ID,
+						AppName:  checked.AppName,
+						Status:   checked.Status,
+						IsPublic: newPublicStatus,
 					})
+				}
+				if checked.Status != link.Status {
 					requestNotifications = append(requestNotifications, db.BulkUpdateNotificationsChatParams{
 						LinkID: link.ID,
 						Status: checked.Status,
@@ -87,7 +91,7 @@ func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.B
 				}
 				notifications, err := dbCtx.ChatStore.BulkUpdateNotifications(
 					requestNotifications,
-					int64(cfg.LimitFree),
+					cfg.LimitFree,
 				)
 				if err != nil {
 					gologging.ErrorF("bulk update notifications: %v", err)
