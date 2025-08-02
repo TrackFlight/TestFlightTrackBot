@@ -62,7 +62,7 @@ func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.B
 						Description: checked.Description,
 					}
 				}
-				if checked.Status != link.Status || link.IsPublic != newPublicStatus {
+				if checked.Status != link.Status || link.IsPublic != newPublicStatus || (!link.AppID.Valid && link.AppID.Valid != (len(checked.AppName) > 0)) {
 					updates = append(updates, db.BulkUpdateLinkParams{
 						LinkID:   link.ID,
 						AppName:  checked.AppName,
