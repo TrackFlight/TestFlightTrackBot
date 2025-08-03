@@ -101,8 +101,8 @@ updated AS (
 INSERT INTO apps (app_name, icon_url, description)
 SELECT
     i.app_name,
-    i.icon_url,
-    i.description
+    NULLIF(i.icon_url, ''),
+    NULLIF(i.description, '')
 FROM input_data as i
 WHERE NOT EXISTS (
     SELECT 1 FROM updated
