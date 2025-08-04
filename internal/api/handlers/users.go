@@ -42,6 +42,8 @@ func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 				URL:              item.LinkURL,
 				Status:           item.Status,
 				IsPublic:         item.IsPublic,
+				NotifyAvailable:  item.AllowOpened,
+				NotifyClosed:     item.AllowClosed,
 				LastAvailability: timestamp,
 				LastUpdate:       item.LastUpdate.Time.UTC().Unix(),
 			})

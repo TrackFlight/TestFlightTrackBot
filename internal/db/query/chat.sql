@@ -18,9 +18,11 @@ SELECT
     REGEXP_REPLACE(links.url, '^https?://', '') AS link_url,
     COALESCE(links.app_id, -links.id)::bigint AS entity_id,
     links.status,
+    links.is_public,
+    chat_links.allow_opened,
+    chat_links.allow_closed,
     links.last_availability,
-    links.updated_at AS last_update,
-    links.is_public
+    links.updated_at AS last_update
 FROM chat_links
 JOIN links ON chat_links.link_id = links.id
 WHERE chat_id = @chat_id
