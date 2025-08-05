@@ -29,6 +29,7 @@
   "NEW_VAR_ALREADY_EXISTS_ADM": "❗️ \u003cb\u003eVariable Already Exists\u003c/b\u003e\nThe variable \u003ccode\u003e{{.VarName}}\u003c/code\u003e is already defined. Use a different name or update its value.",
   "NEW_VAR_ERROR_USAGE_ADM": "‼️ \u003cb\u003eInvalid Usage of /add_var Command\u003c/b\u003e\nUse: \u003ccode\u003e/add_var VAR_NAME VAR_VALUE\u003c/code\u003e\nE.g.: \u003ccode\u003e/add_var fox_cheer Hello, crafty fox! ✨🦊\u003c/code\u003e",
   "NEW_VAR_SUCCESS_ADM": "✅ \u003cb\u003eVariable Added\u003c/b\u003e",
+  "NOTIFICATION_SETTINGS_HEADER": "Notification Settings",
   "REMOVE_APP_CONFIRM_DESC": "Are you sure you want to remove this app? All associated beta links will be deleted.",
   "REMOVE_APP_CONFIRM_TITLE": "Remove App",
   "REMOVE_BTN": "Remove",
