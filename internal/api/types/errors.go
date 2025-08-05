@@ -6,6 +6,7 @@ const (
 	ErrBadRequest           = "BAD_REQUEST"
 	ErrInternalServer       = "INTERNAL_SERVER_ERROR"
 	ErrLinkAlreadyFollowing = "LINK_ALREADY_FOLLOWING"
+	ErrLinkLimitExceeded    = "LINK_LIMIT_EXCEEDED"
 	ErrInvalidLanguageCode  = "INVALID_LANGUAGE_CODE"
 )
 

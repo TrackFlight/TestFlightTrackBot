@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/Laky-64/TestFlightTrackBot/internal/api/middleware"
 	"github.com/Laky-64/TestFlightTrackBot/internal/api/types"
 	"github.com/Laky-64/TestFlightTrackBot/internal/api/utils"
@@ -10,6 +11,7 @@ import (
 	"github.com/Laky-64/TestFlightTrackBot/internal/db"
 	"github.com/Laky-64/TestFlightTrackBot/internal/testflight"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"maps"
 	"net/http"
 	"slices"
@@ -126,11 +128,25 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 			}
 		}
 
-		if following, err := dbCtx.ChatStore.Track(r.Context().Value(middleware.UserIDKey).(int64), newLink.ID, newLink.Link, cfg.LimitFree); err != nil {
+		if following, err := dbCtx.ChatStore.Track(
+			r.Context().Value(middleware.UserIDKey).(int64),
+			newLink.ID,
+			newLink.Link,
+			cfg.LimitFree,
+			1,
+		); err != nil {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) {
+				if pgErr.Code == db.DuplicateError {
+					utils.JSONError(w, types.ErrLinkAlreadyFollowing, "Link already tracked", http.StatusConflict)
+					return
+				} else if pgErr.Code == db.LimitExceeded {
+					utils.JSONError(w, types.ErrLinkLimitExceeded, "Link limit exceeded", http.StatusForbidden)
+					return
+				}
+				fmt.Println(pgErr.Code)
+			}
 			utils.JSONError(w, types.ErrInternalServer, "Error tracking link", http.StatusInternalServerError)
-			return
-		} else if following == nil {
-			utils.JSONError(w, types.ErrLinkAlreadyFollowing, "Link already tracked", http.StatusConflict)
 			return
 		} else {
 			w.Header().Set("Content-Type", "application/json")

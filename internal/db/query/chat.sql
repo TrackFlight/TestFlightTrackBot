@@ -31,7 +31,7 @@ ORDER BY chat_links.created_at;
 
 -- name: Track :one
 -- cache: type:remove table:chat_links key:chat_id fields:all_by_key
--- order: chat_id, link_id, link_url, free_limit
+-- order: chat_id, link_id, link_url, free_limit, max_following_per_user
 WITH existing_link AS (
     SELECT id, url, app_id, status, is_public, last_availability, updated_at
     FROM links as l
@@ -40,9 +40,25 @@ WITH existing_link AS (
         OR l.id = @link_id
     LIMIT 1
 ),
+tracking AS (
+    SELECT COUNT(*) AS links_count
+    FROM chat_links cl
+    WHERE cl.chat_id = @chat_id
+    AND cl.allow_opened
+    OR cl.allow_closed
+),
+limit_check AS (
+    SELECT assert(
+        links_count < @max_following_per_user::bigint,
+        format('Too many links followed: %s / %s', links_count, @max_following_per_user),
+        'P1600'
+    )
+    FROM tracking
+),
 inserted_link AS (
     INSERT INTO links (url)
     SELECT @link_url
+    FROM limit_check
     WHERE NOT EXISTS (SELECT 1 FROM existing_link)
     RETURNING id, url, updated_at
 ),
@@ -51,21 +67,13 @@ final_link AS (
     UNION ALL
     SELECT id, url, updated_at FROM existing_link
 ),
-tracking AS (
-    SELECT COUNT(*) AS links_count
-    FROM chat_links cl
-    JOIN links l ON l.id = cl.link_id
-    WHERE cl.chat_id = @chat_id
-    AND cl.allow_opened OR cl.allow_closed
-),
 inserted_tracking AS (
     INSERT INTO chat_links (chat_id, link_id, allow_opened)
-    VALUES (
+    SELECT
         @chat_id,
         (SELECT id FROM final_link),
         (SELECT links_count FROM tracking) < @free_limit::bigint
-    )
-    ON CONFLICT (chat_id, link_id) DO NOTHING
+    FROM limit_check
     RETURNING link_id
 )
 SELECT
