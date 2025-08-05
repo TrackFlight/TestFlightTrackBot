@@ -1,4 +1,4 @@
-oot = "."
+root = "."
 tmp_dir = ".docker_build"
 
 [build]
