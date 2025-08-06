@@ -22,23 +22,35 @@ func Start(dbCtx *db.DB, cfg *config.Config) {
 
 		api.Group(func(private chi.Router) {
 			private.Use(middleware.JWT)
-			private.Use(
-				middleware.AntiFlood(
-					7,
-					5*time.Second,
-					5*time.Second,
-					time.Hour,
-					4*time.Minute,
-				),
-			)
 
 			private.Route("/users", func(users chi.Router) {
-				users.Get("/links", handlers.GetLinks(dbCtx))
-				users.Post("/links", handlers.AddLink(dbCtx, cfg))
-				users.Delete("/links", handlers.DeleteLinks(dbCtx))
+				users.Group(func(internal chi.Router) {
+					internal.Use(
+						middleware.AntiFlood(
+							7,
+							5*time.Second,
+							5*time.Second,
+							time.Hour,
+							4*time.Minute,
+						),
+					)
+
+					internal.Post("/links", handlers.AddLink(dbCtx, cfg))
+					internal.Get("/links", handlers.GetLinks(dbCtx))
+					internal.Delete("/links", handlers.DeleteLinks(dbCtx))
+				})
 			})
 
 			private.Route("/langpack", func(help chi.Router) {
+				help.Use(
+					middleware.AntiFlood(
+						12,
+						5*time.Second,
+						5*time.Second,
+						time.Hour,
+						4*time.Minute,
+					),
+				)
 				help.Get("/", handlers.GetLangPack(dbCtx))
 			})
 		})
