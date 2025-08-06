@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/Laky-64/TestFlightTrackBot/internal/api/middleware"
 	"github.com/Laky-64/TestFlightTrackBot/internal/api/types"
 	"github.com/Laky-64/TestFlightTrackBot/internal/api/utils"
@@ -141,10 +140,9 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 					utils.JSONError(w, types.ErrLinkAlreadyFollowing, "Link already tracked", http.StatusConflict)
 					return
 				} else if pgErr.Code == db.LimitExceeded {
-					utils.JSONError(w, types.ErrLinkLimitExceeded, "Link limit exceeded", http.StatusForbidden)
+					utils.JSONError(w, types.ErrLimitExceeded, "Link limit exceeded", http.StatusForbidden)
 					return
 				}
-				fmt.Println(pgErr.Code)
 			}
 			utils.JSONError(w, types.ErrInternalServer, "Error tracking link", http.StatusInternalServerError)
 			return
