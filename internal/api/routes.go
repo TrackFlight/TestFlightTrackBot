@@ -19,6 +19,7 @@ func Start(dbCtx *db.DB, cfg *config.Config) {
 
 	r.Route("/api", func(api chi.Router) {
 		api.Post("/auth", handlers.AuthHandler(cfg.TelegramToken))
+		api.Get("/get_config", handlers.GetConfig(cfg))
 
 		api.Group(func(private chi.Router) {
 			private.Use(middleware.JWT)
