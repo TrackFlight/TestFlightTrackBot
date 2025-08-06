@@ -9,11 +9,13 @@ import (
 	"github.com/Laky-64/TestFlightTrackBot/internal/config"
 	"github.com/Laky-64/TestFlightTrackBot/internal/db"
 	"github.com/Laky-64/TestFlightTrackBot/internal/testflight"
+	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"maps"
 	"net/http"
 	"slices"
+	"strconv"
 )
 
 func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
@@ -179,5 +181,44 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 				},
 			})
 		}
+	}
+}
+
+func EditLinkSettings(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := chi.URLParam(r, "id")
+		if id == "" {
+			utils.JSONError(w, types.ErrBadRequest, "Link ID is required", http.StatusBadRequest)
+			return
+		}
+		linkID, err := strconv.Atoi(id)
+		if err != nil {
+			utils.JSONError(w, types.ErrBadRequest, "Invalid link ID format", http.StatusBadRequest)
+			return
+		}
+		var settings types.EditLinkSettingsRequest
+		if err = json.NewDecoder(r.Body).Decode(&settings); err != nil {
+			utils.JSONError(w, types.ErrBadRequest, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+		if err = dbCtx.ChatStore.UpdateNotificationSettings(
+			r.Context().Value(middleware.UserIDKey).(int64),
+			int64(linkID),
+			settings.NotifyAvailable,
+			settings.NotifyClosed,
+			cfg.LimitFree,
+		); err != nil && !errors.Is(err, pgx.ErrNoRows) {
+			var pgErr *pgconn.PgError
+			if errors.As(err, &pgErr) {
+				if pgErr.Code == db.LimitExceeded {
+					utils.JSONError(w, types.ErrLimitExceeded, "Link limit exceeded", http.StatusForbidden)
+					return
+				}
+			}
+			utils.JSONError(w, types.ErrInternalServer, "Error tracking link", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNoContent)
 	}
 }

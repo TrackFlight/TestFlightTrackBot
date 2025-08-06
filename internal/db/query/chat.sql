@@ -89,6 +89,32 @@ LEFT JOIN existing_link ON existing_link.id = inserted_tracking.link_id
 LEFT JOIN final_link ON final_link.id = inserted_tracking.link_id;
 
 
+-- name: UpdateNotificationSettings :exec
+-- order: chat_id, link_id, allow_opened, allow_closed, free_limit
+WITH limit_check AS (
+    SELECT assert(
+        COUNT(*) < @free_limit::bigint,
+        format('Too many active tracked links: %s / %s', COUNT(*), @free_limit),
+        'P1600'
+    )
+    FROM chat_links cl
+    WHERE cl.chat_id = @chat_id::bigint
+    AND cl.link_id != @link_id::bigint
+    AND (cl.allow_opened OR cl.allow_closed)
+)
+UPDATE chat_links
+SET allow_opened = @allow_opened,
+allow_closed = @allow_closed,
+updated_at = NOW()
+FROM limit_check
+WHERE chat_id = @chat_id::bigint
+AND link_id = @link_id::bigint
+AND (
+    allow_opened IS DISTINCT FROM @allow_opened
+    OR allow_closed IS DISTINCT FROM @allow_closed
+);
+
+
 -- name: Delete :exec
 -- cache: type:remove table:chat_links key:chat_id fields:all_by_key
 DELETE FROM chat_links

@@ -40,6 +40,19 @@ func Start(dbCtx *db.DB, cfg *config.Config) {
 					internal.Get("/links", handlers.GetLinks(dbCtx))
 					internal.Delete("/links", handlers.DeleteLinks(dbCtx))
 				})
+				users.Group(func(internal chi.Router) {
+					internal.Use(
+						middleware.AntiFlood(
+							10,
+							5*time.Second,
+							5*time.Second,
+							time.Hour,
+							4*time.Minute,
+						),
+					)
+
+					internal.Patch("/links/{id}", handlers.EditLinkSettings(dbCtx, cfg))
+				})
 			})
 
 			private.Route("/langpack", func(help chi.Router) {
