@@ -13,9 +13,9 @@ func GetConfig(cfg *config.Config) func(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(
 			types.Config{
-				LimitFree:           cfg.LimitFree,
-				LimitPremium:        cfg.LimitPremium,
-				MaxFollowingPerUser: cfg.MaxFollowingPerUser,
+				LimitFree:         cfg.LimitFree,
+				LimitPremium:      cfg.LimitPremium,
+				MaxFollowingLinks: cfg.MaxFollowingLinks,
 			},
 		)
 	}

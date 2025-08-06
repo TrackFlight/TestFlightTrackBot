@@ -9,9 +9,9 @@ type Config struct {
 
 	TelegramToken string
 
-	LimitFree           int64
-	LimitPremium        int64
-	MaxFollowingPerUser int64
+	LimitFree         int64
+	LimitPremium      int64
+	MaxFollowingLinks int64
 
 	PublicLinkMinUsers int64
 }

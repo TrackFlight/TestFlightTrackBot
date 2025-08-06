@@ -31,7 +31,7 @@ ORDER BY chat_links.created_at;
 
 -- name: Track :one
 -- cache: type:remove table:chat_links key:chat_id fields:all_by_key
--- order: chat_id, link_id, link_url, free_limit, max_following_per_user
+-- order: chat_id, link_id, link_url, free_limit, max_following_links
 WITH existing_link AS (
     SELECT id, url, app_id, status, is_public, last_availability, updated_at
     FROM links as l
@@ -49,8 +49,8 @@ tracking AS (
 ),
 limit_check AS (
     SELECT assert(
-        links_count < @max_following_per_user::bigint,
-        format('Too many links followed: %s / %s', links_count, @max_following_per_user),
+        links_count < @max_following_links::bigint,
+        format('Too many links followed: %s / %s', links_count, @max_following_links),
         'P1600'
     )
     FROM tracking

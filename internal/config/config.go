@@ -14,10 +14,10 @@ func Load() (*Config, error) {
 		DBName:        os.Getenv("DB_NAME"),
 		TelegramToken: os.Getenv("TELEGRAM_TOKEN"),
 
-		LimitFree:           int64(getEnvInt("LIMIT_FREE", 3)),
-		LimitPremium:        int64(getEnvInt("LIMIT_PREMIUM", 10)),
-		MaxFollowingPerUser: int64(getEnvInt("MAX_FOLLOWING_PER_USER", 50)),
-		PublicLinkMinUsers:  int64(getEnvInt("PUBLIC_LINK_MIN_USERS", 20)),
+		LimitFree:          int64(getEnvInt("LIMIT_FREE", 3)),
+		LimitPremium:       int64(getEnvInt("LIMIT_PREMIUM", 10)),
+		MaxFollowingLinks:  int64(getEnvInt("MAX_FOLLOWING_LINKS", 50)),
+		PublicLinkMinUsers: int64(getEnvInt("PUBLIC_LINK_MIN_USERS", 20)),
 	}
 
 	if len(cfg.DBUser) == 0 {
