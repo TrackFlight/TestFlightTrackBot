@@ -15,7 +15,7 @@ SELECT lang FROM chats WHERE id = @id;
 -- cache: type:get table:chat_links key:chat_id version_by:links.id
 SELECT
     links.id AS id,
-    REGEXP_REPLACE(links.url, '^https?://', '') AS link_url,
+    links.url AS link_url,
     COALESCE(links.app_id, -links.id)::bigint AS entity_id,
     links.status,
     links.is_public,
@@ -36,7 +36,7 @@ WITH existing_link AS (
     SELECT id, url, app_id, status, is_public, last_availability, updated_at
     FROM links as l
     WHERE
-        l.url = @link_url
+        l.url = REGEXP_REPLACE(@link_url, '^https?://', '')
         OR l.id = @link_id
     LIMIT 1
 ),
@@ -57,7 +57,7 @@ limit_check AS (
 ),
 inserted_link AS (
     INSERT INTO links (url)
-    SELECT @link_url
+    SELECT REGEXP_REPLACE(@link_url, '^https?://', '')
     FROM limit_check
     WHERE NOT EXISTS (SELECT 1 FROM existing_link)
     RETURNING id, url, updated_at
@@ -79,7 +79,7 @@ inserted_tracking AS (
 SELECT
     inserted_tracking.link_id AS id,
     COALESCE(existing_link.app_id, -inserted_tracking.link_id)::bigint AS entity_id,
-    REGEXP_REPLACE(final_link.url, '^https?://', '') AS link_url,
+    final_link.url::text AS link_url,
     existing_link.status,
     existing_link.last_availability,
     COALESCE(existing_link.is_public, false)::boolean AS is_public,
