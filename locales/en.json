@@ -1,5 +1,5 @@
 {
-  "ADD_LINK_PROMPT": "Paste your TestFlight link below",
+  "ADD_LINK_INPUT_PLACEHOLDER": "Enter URL",
   "APP_DESCRIPTION_HEADER": "Description",
   "APP_FOLLOWERS_AMOUNT_ONE": "{{.Amount}} follower",
   "APP_FOLLOWERS_AMOUNT_OTHER": "{{.Amount}} followers",
