@@ -91,6 +91,7 @@ LEFT JOIN final_link ON final_link.id = inserted_tracking.link_id;
 
 
 -- name: UpdateNotificationSettings :exec
+-- cache: type:remove table:chat_links key:chat_id fields:all_by_key
 -- order: chat_id, link_id, notify_available, notify_closed, free_limit
 WITH limit_check AS (
     SELECT assert(
