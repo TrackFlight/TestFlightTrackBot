@@ -26,8 +26,10 @@ type Link struct {
 }
 
 type AddLinkRequest struct {
-	ID   int64  `json:"id"`
-	Link string `json:"link"`
+	ID              int64  `json:"id"`
+	Link            string `json:"link"`
+	NotifyAvailable bool   `json:"notify_available"`
+	NotifyClosed    bool   `json:"notify_closed"`
 }
 
 type EditLinkSettingsRequest struct {

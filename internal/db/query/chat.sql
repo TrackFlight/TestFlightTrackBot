@@ -19,8 +19,8 @@ SELECT
     COALESCE(links.app_id, -links.id)::bigint AS entity_id,
     links.status,
     links.is_public,
-    chat_links.allow_opened,
-    chat_links.allow_closed,
+    chat_links.notify_available,
+    chat_links.notify_closed,
     links.last_availability,
     links.updated_at AS last_update
 FROM chat_links
@@ -31,7 +31,7 @@ ORDER BY chat_links.created_at;
 
 -- name: Track :one
 -- cache: type:remove table:chat_links key:chat_id fields:all_by_key
--- order: chat_id, link_id, link_url, free_limit, max_following_links
+-- order: chat_id, link_id, link_url, notify_available, notify_closed, free_limit, max_following_links
 WITH existing_link AS (
     SELECT id, url, app_id, status, is_public, last_availability, updated_at
     FROM links as l
@@ -44,8 +44,8 @@ tracking AS (
     SELECT COUNT(*) AS links_count
     FROM chat_links cl
     WHERE cl.chat_id = @chat_id
-    AND cl.allow_opened
-    OR cl.allow_closed
+    AND cl.notify_available
+    OR cl.notify_closed
 ),
 limit_check AS (
     SELECT assert(
@@ -68,11 +68,12 @@ final_link AS (
     SELECT id, url, updated_at FROM existing_link
 ),
 inserted_tracking AS (
-    INSERT INTO chat_links (chat_id, link_id, allow_opened)
+    INSERT INTO chat_links (chat_id, link_id, notify_available, notify_closed)
     SELECT
         @chat_id,
         (SELECT id FROM final_link),
-        (SELECT links_count FROM tracking) < @free_limit::bigint
+        ((SELECT links_count FROM tracking) < @free_limit::bigint) AND @notify_available::boolean,
+        ((SELECT links_count FROM tracking) < @free_limit::bigint) AND @notify_closed::boolean
     FROM limit_check
     RETURNING link_id
 )
@@ -90,7 +91,7 @@ LEFT JOIN final_link ON final_link.id = inserted_tracking.link_id;
 
 
 -- name: UpdateNotificationSettings :exec
--- order: chat_id, link_id, allow_opened, allow_closed, free_limit
+-- order: chat_id, link_id, notify_available, notify_closed, free_limit
 WITH limit_check AS (
     SELECT assert(
         COUNT(*) < @free_limit::bigint,
@@ -100,18 +101,18 @@ WITH limit_check AS (
     FROM chat_links cl
     WHERE cl.chat_id = @chat_id::bigint
     AND cl.link_id != @link_id::bigint
-    AND (cl.allow_opened OR cl.allow_closed)
+    AND (cl.notify_available OR cl.notify_closed)
 )
 UPDATE chat_links
-SET allow_opened = @allow_opened,
-allow_closed = @allow_closed,
+SET notify_available = @notify_available,
+notify_closed = @notify_closed,
 updated_at = NOW()
 FROM limit_check
 WHERE chat_id = @chat_id::bigint
 AND link_id = @link_id::bigint
 AND (
-    allow_opened IS DISTINCT FROM @allow_opened
-    OR allow_closed IS DISTINCT FROM @allow_closed
+    notify_available IS DISTINCT FROM @notify_available
+    OR notify_closed IS DISTINCT FROM @notify_closed
 );
 
 
@@ -146,8 +147,8 @@ candidates AS (
     JOIN ranked_links rl ON rl.link_id = cl.link_id AND rl.chat_id = cl.chat_id
     WHERE cl.last_notified_status IS DISTINCT FROM i.status
     AND (
-        cl.allow_opened = (i.status = 'available')
-        OR cl.allow_closed = (i.status != 'available')
+        cl.notify_available = (i.status = 'available')
+        OR cl.notify_closed = (i.status != 'available')
     )
     AND (
         EXISTS (

@@ -45,8 +45,8 @@ func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 				URL:              item.LinkURL,
 				Status:           item.Status,
 				IsPublic:         item.IsPublic,
-				NotifyAvailable:  item.AllowOpened,
-				NotifyClosed:     item.AllowClosed,
+				NotifyAvailable:  item.NotifyAvailable,
+				NotifyClosed:     item.NotifyClosed,
 				LastAvailability: timestamp,
 				LastUpdate:       item.LastUpdate.Time.UTC().Unix(),
 			})
@@ -133,6 +133,8 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 			r.Context().Value(middleware.UserIDKey).(int64),
 			newLink.ID,
 			newLink.Link,
+			newLink.NotifyAvailable,
+			newLink.NotifyClosed,
 			cfg.LimitFree,
 			cfg.MaxFollowingLinks,
 		); err != nil {
