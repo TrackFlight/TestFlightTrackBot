@@ -134,7 +134,7 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 			newLink.ID,
 			newLink.Link,
 			cfg.LimitFree,
-			1,
+			cfg.MaxFollowingLinks,
 		); err != nil {
 			var pgErr *pgconn.PgError
 			if errors.As(err, &pgErr) {
