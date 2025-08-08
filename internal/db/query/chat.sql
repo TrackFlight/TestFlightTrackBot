@@ -31,21 +31,31 @@ ORDER BY chat_links.created_at;
 
 -- name: Track :one
 -- cache: type:remove table:chat_links key:chat_id fields:all_by_key
--- order: chat_id, link_id, link_url, notify_available, notify_closed, free_limit, max_following_links
-WITH existing_link AS (
-    SELECT id, url, app_id, status, is_public, last_availability, updated_at
-    FROM links as l
-    WHERE
-        l.url = REGEXP_REPLACE(@link_url, '^https?://', '')
-        OR l.id = @link_id
-    LIMIT 1
+-- order: chat_id, link_url, notify_available, notify_closed, free_limit, max_following_links
+WITH normalized AS (
+    SELECT REGEXP_REPLACE(@link_url, '^https?://', '') AS url
+),
+ins AS (
+    INSERT INTO links (url)
+    SELECT url FROM normalized
+    ON CONFLICT (url) DO NOTHING
+    RETURNING id, url, updated_at
+),
+link_row AS (
+    SELECT id, url, updated_at
+    FROM ins
+    UNION ALL
+    SELECT l.id, l.url, l.updated_at
+    FROM links l
+    JOIN normalized n ON l.url = n.url
 ),
 tracking AS (
-    SELECT COUNT(*) AS links_count
+    SELECT COUNT(*) FILTER (
+        WHERE cl.chat_id = @chat_id
+        AND (cl.notify_available OR cl.notify_closed)
+    )
+    AS links_count
     FROM chat_links cl
-    WHERE cl.chat_id = @chat_id
-    AND cl.notify_available
-    OR cl.notify_closed
 ),
 limit_check AS (
     SELECT assert(
@@ -55,39 +65,27 @@ limit_check AS (
     )
     FROM tracking
 ),
-inserted_link AS (
-    INSERT INTO links (url)
-    SELECT REGEXP_REPLACE(@link_url, '^https?://', '')
-    FROM limit_check
-    WHERE NOT EXISTS (SELECT 1 FROM existing_link)
-    RETURNING id, url, updated_at
-),
-final_link AS (
-    SELECT id, url, updated_at FROM inserted_link
-    UNION ALL
-    SELECT id, url, updated_at FROM existing_link
-),
-inserted_tracking AS (
+ins_cl AS (
     INSERT INTO chat_links (chat_id, link_id, notify_available, notify_closed)
     SELECT
         @chat_id,
-        (SELECT id FROM final_link),
-        ((SELECT links_count FROM tracking) < @free_limit::bigint) AND @notify_available::boolean,
-        ((SELECT links_count FROM tracking) < @free_limit::bigint) AND @notify_closed::boolean
-    FROM limit_check
+        link_row.id,
+        (@notify_available::boolean AND links_count < @free_limit::bigint),
+        (@notify_closed::boolean AND links_count < @free_limit::bigint)
+    FROM link_row, tracking, limit_check
     RETURNING link_id
 )
 SELECT
-    inserted_tracking.link_id AS id,
-    COALESCE(existing_link.app_id, -inserted_tracking.link_id)::bigint AS entity_id,
-    final_link.url::text AS link_url,
-    existing_link.status,
-    existing_link.last_availability,
-    COALESCE(existing_link.is_public, false)::boolean AS is_public,
-    final_link.updated_at AS last_update
-FROM inserted_tracking
-LEFT JOIN existing_link ON existing_link.id = inserted_tracking.link_id
-LEFT JOIN final_link ON final_link.id = inserted_tracking.link_id;
+    ic.link_id  AS id,
+    COALESCE(el.app_id, -ic.link_id)::bigint AS entity_id,
+    lr.url::text AS link_url,
+    el.status,
+    el.last_availability,
+    el.is_public::bool AS is_public,
+    lr.updated_at   AS last_update
+FROM ins_cl ic
+LEFT JOIN links el      ON el.id = ic.link_id
+LEFT JOIN link_row lr   ON lr.id = ic.link_id;
 
 
 -- name: UpdateNotificationSettings :exec

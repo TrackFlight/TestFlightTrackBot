@@ -114,24 +114,19 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 			utils.JSONError(w, types.ErrBadRequest, "Invalid request body", http.StatusBadRequest)
 			return
 		}
-		if newLink.Link == "" && newLink.ID == 0 {
-			utils.JSONError(w, types.ErrBadRequest, "Link or ID must be provided", http.StatusBadRequest)
-			return
-		} else if newLink.Link != "" && newLink.ID != 0 {
-			utils.JSONError(w, types.ErrBadRequest, "Only one of Link or ID should be provided", http.StatusBadRequest)
+
+		if len(newLink.Link) == 0 {
+			utils.JSONError(w, types.ErrBadRequest, "Link must be provided", http.StatusBadRequest)
 			return
 		}
 
-		if newLink.Link != "" {
-			if !testflight.RegexLink.MatchString(newLink.Link) {
-				utils.JSONError(w, types.ErrBadRequest, "Invalid TestFlight link format", http.StatusBadRequest)
-				return
-			}
+		if !testflight.RegexLink.MatchString(newLink.Link) {
+			utils.JSONError(w, types.ErrBadRequest, "Invalid TestFlight link format", http.StatusBadRequest)
+			return
 		}
 
 		if following, err := dbCtx.ChatStore.Track(
 			r.Context().Value(middleware.UserIDKey).(int64),
-			newLink.ID,
 			newLink.Link,
 			newLink.NotifyAvailable,
 			newLink.NotifyClosed,
