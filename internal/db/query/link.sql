@@ -13,6 +13,7 @@ FROM links
 JOIN chat_links ON chat_links.link_id = links.id
 GROUP BY links.id, links.url, links.app_id, links.status;
 
+
 -- name: BulkDelete :many
 WITH deleted AS (
     DELETE FROM links
@@ -23,6 +24,30 @@ SELECT chats.id AS chat_id, chats.lang, deleted.link_id, deleted.url AS link_url
 FROM deleted
 JOIN chat_links ON chat_links.link_id = deleted.link_id
 JOIN chats ON chats.id = chat_links.chat_id;
+
+
+-- name: GetLinksByApps :many
+-- cache: type:get table:trending_apps_links ttl:1d
+SELECT
+    links.id,
+    (
+        CASE
+        WHEN links.is_public THEN links.url
+        ELSE
+            'testflight.apple.com/join/' ||
+            repeat(
+                'X',
+                length(substring(links.url from 'testflight\.apple\.com/join/(.+)$'))
+            )
+        END
+    )::text AS url,
+    links.app_id::bigint AS app_id,
+    links.status,
+    links.last_availability,
+    links.is_public,
+    links.updated_at AS last_update
+FROM links
+WHERE links.app_id = ANY(@app_id::bigint[]);
 
 
 -- name: BulkUpdate :many

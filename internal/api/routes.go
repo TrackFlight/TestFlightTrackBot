@@ -67,6 +67,19 @@ func Start(dbCtx *db.DB, cfg *config.Config) {
 				)
 				help.Get("/", handlers.GetLangPack(dbCtx))
 			})
+
+			private.Route("/stats", func(stats chi.Router) {
+				stats.Use(
+					middleware.AntiFlood(
+						12,
+						5*time.Second,
+						5*time.Second,
+						time.Hour,
+						4*time.Minute,
+					),
+				)
+				stats.Get("/trending", handlers.GetTrendingApps(dbCtx))
+			})
 		})
 	})
 

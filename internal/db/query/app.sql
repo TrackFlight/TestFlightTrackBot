@@ -28,6 +28,27 @@ CROSS JOIN LATERAL (
 ORDER BY a.l_value, la.followers DESC;
 
 
+-- name: GetTrending :many
+-- cache: type:get table:trending_apps ttl:1d
+SELECT
+    a.id,
+    a.app_name,
+    a.icon_url,
+    a.description,
+    COUNT(DISTINCT cl.chat_id) AS followers
+FROM links l
+JOIN chat_links cl ON cl.link_id = l.id
+JOIN apps a ON a.id = l.app_id
+GROUP BY a.id
+ORDER BY
+    COUNT(DISTINCT cl.chat_id) * 0.2 +
+    COUNT(DISTINCT cl.chat_id) FILTER (
+        WHERE cl.created_at >= NOW() - INTERVAL '7 days'
+    ) * 0.8
+    DESC
+LIMIT 50;
+
+
 -- name: GetAppsInfo :many
 -- cache: type:get table:apps key:entity_ids ttl:30m
 WITH

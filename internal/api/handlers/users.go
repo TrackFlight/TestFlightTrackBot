@@ -32,7 +32,9 @@ func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 		for _, item := range list {
 			if _, exists := result[item.EntityID]; !exists {
 				result[item.EntityID] = &types.App{
-					ID: item.EntityID,
+					BaseApp: types.BaseApp{
+						ID: item.EntityID,
+					},
 				}
 				orderKeys = append(orderKeys, item.EntityID)
 			}
@@ -41,14 +43,16 @@ func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 				timestamp = item.LastAvailability.Time.UTC().Unix()
 			}
 			result[item.EntityID].Links = append(result[item.EntityID].Links, types.Link{
-				ID:               item.ID,
-				URL:              item.LinkURL,
-				Status:           item.Status,
-				IsPublic:         item.IsPublic,
-				NotifyAvailable:  item.NotifyAvailable,
-				NotifyClosed:     item.NotifyClosed,
-				LastAvailability: timestamp,
-				LastUpdate:       item.LastUpdate.Time.UTC().Unix(),
+				BaseLink: types.BaseLink{
+					ID:               item.ID,
+					URL:              item.LinkURL,
+					Status:           item.Status,
+					IsPublic:         item.IsPublic,
+					LastAvailability: timestamp,
+					LastUpdate:       item.LastUpdate.Time.UTC().Unix(),
+				},
+				NotifyAvailable: item.NotifyAvailable,
+				NotifyClosed:    item.NotifyClosed,
 			})
 		}
 
@@ -161,19 +165,23 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 			}
 			entityInfo := entityList[0]
 			_ = json.NewEncoder(w).Encode(types.App{
-				ID:          following.EntityID,
-				Name:        entityInfo.AppName,
-				IconURL:     entityInfo.IconURL,
-				Description: entityInfo.Description,
-				Followers:   entityInfo.Followers,
+				BaseApp: types.BaseApp{
+					ID:          following.EntityID,
+					Name:        entityInfo.AppName,
+					IconURL:     entityInfo.IconURL,
+					Description: entityInfo.Description,
+					Followers:   entityInfo.Followers,
+				},
 				Links: []types.Link{
 					{
-						ID:               following.ID,
-						URL:              following.LinkURL,
-						Status:           following.Status,
-						IsPublic:         following.IsPublic,
-						LastAvailability: timestamp,
-						LastUpdate:       following.LastUpdate.Time.UTC().Unix(),
+						BaseLink: types.BaseLink{
+							ID:               following.ID,
+							URL:              following.LinkURL,
+							Status:           following.Status,
+							IsPublic:         following.IsPublic,
+							LastAvailability: timestamp,
+							LastUpdate:       following.LastUpdate.Time.UTC().Unix(),
+						},
 					},
 				},
 			})
