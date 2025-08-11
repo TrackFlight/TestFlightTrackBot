@@ -26,7 +26,7 @@ type {{$name}} struct {
 {{- $tableSingularName := $cacheOptions.Table | Singular}}
 {{- $allowedGetCache := and $cacheOptions.Allow (not (eq .Cmd ":exec")) (eq $cacheOptions.Kind "get") (not $isBulk)}}
 {{- $allowedVersioning := and $allowedGetCache $cacheOptions.VersionBy}}
-{{- $allowedSplitCacheSave := and $allowedGetCache $cacheOptions.KeyColumn.IsArray}}
+{{- $allowedSplitCacheSave := and $allowedGetCache $cacheOptions.KeyColumn $cacheOptions.KeyColumn.IsArray}}
 {{- $filteredSplitCacheName := ""}}
 {{- if $allowedSplitCacheSave}}
 {{- $filteredSplitCacheName = printf "%sFiltered" ($cacheOptions.Key | ToCamelCase)}}
