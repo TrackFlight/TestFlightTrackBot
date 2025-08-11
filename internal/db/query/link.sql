@@ -47,7 +47,8 @@ SELECT
     links.is_public,
     links.updated_at AS last_update
 FROM links
-WHERE links.app_id = ANY(@app_id::bigint[]);
+WHERE links.app_id = ANY(@app_id::bigint[])
+ORDER BY links.created_at;
 
 
 -- name: BulkUpdate :many
