@@ -24,7 +24,8 @@ type {{$name}} struct {
 {{- $hasResults := gt (len $filteredColumns) 0 -}}
 {{- $cacheOptions := $queryOptions.Cache}}
 {{- $tableSingularName := $cacheOptions.Table | Singular}}
-{{- $allowedGetCache := and $cacheOptions.Allow (not (eq .Cmd ":exec")) (eq $cacheOptions.Kind "get") (not $isBulk)}}
+{{- $isManyGet := eq $cacheOptions.Kind "get-many"}}
+{{- $allowedGetCache := and $cacheOptions.Allow (not (eq .Cmd ":exec")) (or (eq $cacheOptions.Kind "get") (eq $cacheOptions.Kind "get-many")) (not $isBulk)}}
 {{- $allowedVersioning := and $allowedGetCache $cacheOptions.VersionBy}}
 {{- $allowedSplitCacheSave := and $allowedGetCache $cacheOptions.KeyColumn $cacheOptions.KeyColumn.IsArray}}
 {{- $filteredSplitCacheName := ""}}
@@ -148,7 +149,7 @@ bulkParams []{{$bulkParamsName}}
     {{- end }}
     {{- end }}
     {{- if $allowedGetCache}}
-    valkeyField := "{{if eq (len .Columns) 1}}{{(index .Columns 0).Name}}{{else}}{{- if and $cacheOptions.Key (or (not $isMany) $allowedSplitCacheSave)}}__row{{else}}__all{{- end -}}{{- end -}}"
+    valkeyField := "{{if eq (len .Columns) 1}}{{(index .Columns 0).Name}}{{else}}{{- if and $cacheOptions.Key (or (not $isMany) $allowedSplitCacheSave)}}{{if $isManyGet}}list{{else}}__row{{end}}{{else}}__all{{- end -}}{{- end -}}"
     {{- if $allowedVersioning}}
     valkeyVersionField := "__versions"
     {{- end}}
@@ -178,9 +179,9 @@ bulkParams []{{$bulkParamsName}}
     var {{$filteredSplitCacheName}} []{{ToGoType $cacheOptions.KeyColumn true}}
     for idx, r := range res {
     	if r.Error() == nil {
-    		var item {{$returnName}}
+    		var item {{if $isManyGet}}[]{{end}}{{$returnName}}
     		if err := r.DecodeJSON(&item); err == nil {
-    			i = append(i, item)
+    			i = append(i, item{{if $isManyGet}}...{{end}})
     			continue
     		}
     	}
@@ -228,7 +229,7 @@ bulkParams []{{$bulkParamsName}}
     var versionKeys []string
     {{- end}}
     {{- if $allowedSplitCacheSave}}
-    if len(entityIdsFiltered) > 0 {
+    if len({{$filteredSplitCacheName}}) > 0 {
     {{- end}}
     {{if eq .Cmd ":one" -}}
     row
@@ -347,28 +348,39 @@ bulkParams []{{$bulkParamsName}}
         return {{if or $allowPointer $isMany}}nil{{else}}i{{end}}, err
     }
     {{- else}}
-    var orderedI []{{$returnName}}
     var cmdSaveList []valkey.Completed
+    {{- if $isManyGet}}
+    groupedItems := make(map[{{ToGoType $cacheOptions.KeyColumn true}}][]{{$returnName}})
+    {{- end}}
     for _, r := range {{$cacheOptions.Key | ToCamelCase}} {
         for _, item := range i {
 		    {{- $keyElement := printf "item.%s" ($cacheOptions.Key | ToPascalCase | Singular | ToGoCase) }}
             if {{$keyElement}} == r {
 		        if slices.Contains({{$filteredSplitCacheName}}, {{$keyElement}}) {
-		            jsonData, err := json.Marshal(item)
+		            {{- if $isManyGet}}
+		            groupedItems[{{$keyElement}}] = append(groupedItems[{{$keyElement}}], item)
+		        }
+    	    }
+        }
+    }
+    for id, items := range groupedItems {
+    {{- end}}
+		            jsonData, err := json.Marshal(item{{if $isManyGet}}s{{end}})
                     if err != nil {
                         return nil, err
                     }
-                    valkeyKey := fmt.Sprintf("{{$tableSingularName}}:{{GetSprintfFormatFromKey . $cacheOptions.Key}}", {{$keyElement}})
+                    valkeyKey := fmt.Sprintf("{{$tableSingularName}}:{{GetSprintfFormatFromKey . $cacheOptions.Key}}", {{if $isManyGet}}id{{else}}{{$keyElement}}{{end}})
 		            cmdSaveList = append(
 		                cmdSaveList,
 		                ctx.redis.B().Hset().Key(valkeyKey).FieldValue().FieldValue(valkeyField, string(jsonData)).Build(),
 		                ctx.redis.B().Expire().Key(valkeyKey).Seconds({{$cacheOptions.TTL}}).Build(),
 		            )
+		        {{- if not $isManyGet}}
 		        }
-		        orderedI = append(orderedI, item)
 		        break
 		    }
 		}
+		{{- end}}
     }
     {{- end}}
     ctx.redis.DoMulti(
