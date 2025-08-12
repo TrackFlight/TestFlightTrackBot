@@ -1,5 +1,4 @@
 -- name: Search :many
--- cache: type:get table:apps key:name
 WITH apps_fuzzy AS (
     SELECT
         id,
@@ -9,23 +8,9 @@ WITH apps_fuzzy AS (
     WHERE levenshtein(app_name, @name::text)::float / length(app_name) <= 1.4
     LIMIT 3
 )
-SELECT
-    a.id AS app_id,
-    a.app_name,
-    la.links_count,
-    la.followers,
-    la.updated_at::timestamptz AS updated_at
+SELECT a.id AS app_id
 FROM apps_fuzzy a
-CROSS JOIN LATERAL (
-    SELECT
-        COUNT(l.*)        AS links_count,
-        COUNT(cl.*)       AS followers,
-        MAX(l.updated_at) AS updated_at
-    FROM links l
-    LEFT JOIN chat_links cl ON cl.link_id = l.id
-    WHERE l.app_id = a.id AND l.status IS NOT NULL
-) la
-ORDER BY a.l_value, la.followers DESC;
+ORDER BY a.l_value;
 
 
 -- name: GetTrending :many
