@@ -1,16 +1,10 @@
 -- name: Search :many
-WITH apps_fuzzy AS (
-    SELECT
-        id,
-        app_name,
-        levenshtein(app_name, @name::text)::float / length(app_name) AS l_value
-    FROM apps
-    WHERE levenshtein(app_name, @name::text)::float / length(app_name) <= 1.4
-    LIMIT 3
-)
-SELECT a.id AS app_id
-FROM apps_fuzzy a
-ORDER BY a.l_value;
+SELECT
+    id
+FROM apps
+WHERE levenshtein(lower(app_name), lower(@name::text))::float / GREATEST(length(app_name) - length(@name::text), 1) <= 1.4
+ORDER BY levenshtein(lower(app_name), lower(@name::text))::float / GREATEST(length(app_name) - length(@name), 1)
+LIMIT 5;
 
 
 -- name: GetTrending :many
