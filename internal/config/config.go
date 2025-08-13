@@ -2,6 +2,7 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"strconv"
 )
@@ -18,6 +19,8 @@ func Load() (*Config, error) {
 		LimitPremium:       int64(getEnvInt("LIMIT_PREMIUM", 10)),
 		MaxFollowingLinks:  int64(getEnvInt("MAX_FOLLOWING_LINKS", 50)),
 		PublicLinkMinUsers: int64(getEnvInt("PUBLIC_LINK_MIN_USERS", 20)),
+
+		MiniAppURL: fmt.Sprintf("https://%s", os.Getenv("SERVER_NAME")),
 	}
 
 	if len(cfg.DBUser) == 0 {

@@ -14,4 +14,6 @@ type Config struct {
 	MaxFollowingLinks int64
 
 	PublicLinkMinUsers int64
+
+	MiniAppURL string
 }

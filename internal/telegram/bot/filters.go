@@ -6,7 +6,6 @@ import (
 	"github.com/GoBotApiOfficial/gobotapi/types"
 	"github.com/Laky-64/TestFlightTrackBot/internal/telegram"
 	"github.com/Laky-64/TestFlightTrackBot/internal/telegram/core"
-	"github.com/Laky-64/TestFlightTrackBot/internal/telegram/keyboards"
 	"github.com/Laky-64/TestFlightTrackBot/internal/translator"
 )
 
@@ -34,10 +33,9 @@ func buildFilter[T filters.Filterable](b *Bot, handler func(*core.UpdateContext,
 		ctx := core.NewUpdateContext(b.Api, b.cfg, b.db, languageCode)
 		err := handler(ctx, update)
 		if err != nil {
-			_ = ctx.SendMessageWithKeyboard(
+			_ = ctx.SendMessage(
 				chatID,
 				ctx.Translator.T(translator.UnknownError),
-				keyboards.Home(ctx.Translator),
 			)
 		}
 		b.mutex.Unlock(chatID)

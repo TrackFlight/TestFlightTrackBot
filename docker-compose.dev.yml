@@ -13,6 +13,8 @@ services:
       dockerfile: Dockerfile-dev
     volumes:
       - .:/app
+    environment:
+      SERVER_NAME: ${SERVER_NAME_DEV}
 
   mini-app-dev:
     image: node:24-alpine3.22
