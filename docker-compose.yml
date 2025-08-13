@@ -27,7 +27,9 @@ services:
     restart: unless-stopped
 
   bot:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: bot
     restart: unless-stopped
     depends_on:
