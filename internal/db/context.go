@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"embed"
 	"fmt"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
 	"github.com/jackc/pgx/v5"
@@ -13,6 +14,9 @@ import (
 	"log"
 	"os/exec"
 )
+
+//go:embed schema/*.sql
+var Files embed.FS
 
 func NewDB(cfg *config.Config) (*DB, error) {
 	dsn := fmt.Sprintf(
@@ -33,9 +37,10 @@ func NewDB(cfg *config.Config) (*DB, error) {
 		_ = db.Close()
 	}(sqlConn)
 
+	goose.SetBaseFS(Files)
 	goose.SetLogger(goose.NopLogger())
 
-	if err = goose.Up(sqlConn, "internal/db/schema"); err != nil {
+	if err = goose.Up(sqlConn, "schema"); err != nil {
 		return nil, fmt.Errorf("goose up: %w", err)
 	}
 
