@@ -1,9 +1,17 @@
-FROM golang:1.24-alpine AS build
+FROM golang:1.24-alpine AS builder
 WORKDIR /app
-RUN go mod download
-RUN go build -o bot .
+RUN apk add --no-cache git
+COPY . .
+RUN go install ./cmd/gen_translator_keys \
+ && gen_translator_keys
+RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest \
+ && go install ./cmd/sqlgen \
+ && sqlgen
+RUN go install ./cmd/bot
 
 FROM alpine:latest
 WORKDIR /app
-COPY --from=build /app/bot .
-CMD ["./bot"]
+RUN apk add --no-cache tor bash postgresql-client
+COPY --from=builder /go/bin/bot /usr/local/bin/bot
+COPY --from=builder /app/locales /app/locales
+CMD ["bot"]

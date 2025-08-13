@@ -2,7 +2,13 @@ root = "."
 tmp_dir = ".docker_build"
 
 [build]
-pre_cmd = ["go run ./cmd/gen_translator_keys/", "go run ./cmd/sqlgen/"]
+pre_cmd = [
+    "go get ./cmd/bot",
+    "go get ./cmd/gen_translator_keys",
+    "go get ./cmd/sqlgen",
+    "go run ./cmd/gen_translator_keys/",
+    "go run ./cmd/sqlgen/",
+]
 cmd = "go build -o .docker_build/bot ./cmd/bot"
 bin = "bot"
 full_bin = ".docker_build/bot"
