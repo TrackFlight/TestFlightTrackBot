@@ -4,9 +4,9 @@ import (
 	"github.com/GoBotApiOfficial/gobotapi"
 	"github.com/GoBotApiOfficial/gobotapi/filters"
 	"github.com/GoBotApiOfficial/gobotapi/types"
-	"github.com/Laky-64/TestFlightTrackBot/internal/telegram"
-	"github.com/Laky-64/TestFlightTrackBot/internal/telegram/core"
-	"github.com/Laky-64/TestFlightTrackBot/internal/translator"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/core"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/translator"
 )
 
 func buildFilter[T filters.Filterable](b *Bot, handler func(*core.UpdateContext, T) error, extraFilters ...filters.FilterOperand) func(*gobotapi.Client, T) {

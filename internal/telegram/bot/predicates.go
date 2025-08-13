@@ -3,7 +3,7 @@ package bot
 import (
 	"github.com/GoBotApiOfficial/gobotapi/filters"
 	"github.com/GoBotApiOfficial/gobotapi/types"
-	"github.com/Laky-64/TestFlightTrackBot/internal/translator"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/translator"
 	"strings"
 )
 

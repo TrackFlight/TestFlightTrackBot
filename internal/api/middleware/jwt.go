@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"context"
-	"github.com/Laky-64/TestFlightTrackBot/internal/api/types"
-	"github.com/Laky-64/TestFlightTrackBot/internal/api/utils"
-	"github.com/Laky-64/TestFlightTrackBot/internal/auth"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/api/types"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/api/utils"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/auth"
 	"net/http"
 	"strconv"
 	"strings"

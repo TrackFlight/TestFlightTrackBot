@@ -3,7 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Laky-64/TestFlightTrackBot/internal/api/types"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/api/types"
 	"net/http"
 )
 

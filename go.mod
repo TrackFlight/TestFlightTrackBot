@@ -1,4 +1,4 @@
-module github.com/Laky-64/TestFlightTrackBot
+module github.com/TrackFlight/TestFlightTrackBot
 
 go 1.24.0
 

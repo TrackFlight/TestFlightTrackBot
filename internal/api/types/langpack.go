@@ -1,6 +1,6 @@
 package types
 
-import "github.com/Laky-64/TestFlightTrackBot/internal/translator"
+import "github.com/TrackFlight/TestFlightTrackBot/internal/translator"
 
 type LangPack struct {
 	LangCode string                    `json:"lang_code"`

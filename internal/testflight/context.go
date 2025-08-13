@@ -1,6 +1,6 @@
 package testflight
 
-import "github.com/Laky-64/TestFlightTrackBot/internal/tor"
+import "github.com/TrackFlight/TestFlightTrackBot/internal/tor"
 
 type Client struct {
 	userAgents []string

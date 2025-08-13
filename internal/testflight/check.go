@@ -2,11 +2,11 @@ package testflight
 
 import (
 	"errors"
-	"github.com/Laky-64/TestFlightTrackBot/internal/db"
-	"github.com/Laky-64/TestFlightTrackBot/internal/db/models"
-	"github.com/Laky-64/TestFlightTrackBot/internal/tor"
-	"github.com/Laky-64/TestFlightTrackBot/internal/utils"
 	"github.com/Laky-64/http"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/db/models"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/tor"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/utils"
 	"sync"
 )
 

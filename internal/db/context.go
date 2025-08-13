@@ -5,7 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/Laky-64/TestFlightTrackBot/internal/config"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
 	"github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"

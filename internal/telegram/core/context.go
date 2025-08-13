@@ -3,9 +3,9 @@ package core
 import (
 	"github.com/GoBotApiOfficial/gobotapi"
 	"github.com/GoBotApiOfficial/gobotapi/methods"
-	"github.com/Laky-64/TestFlightTrackBot/internal/config"
-	"github.com/Laky-64/TestFlightTrackBot/internal/db"
-	"github.com/Laky-64/TestFlightTrackBot/internal/translator"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/translator"
 )
 
 type UpdateContext struct {

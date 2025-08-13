@@ -1,6 +1,6 @@
 package testflight
 
-import "github.com/Laky-64/TestFlightTrackBot/internal/db/models"
+import "github.com/TrackFlight/TestFlightTrackBot/internal/db/models"
 
 type UserAgent struct {
 	UserAgent string `json:"useragent"`

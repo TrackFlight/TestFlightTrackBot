@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/GoBotApiOfficial/gobotapi/methods"
 	"github.com/GoBotApiOfficial/gobotapi/types"
-	"github.com/Laky-64/TestFlightTrackBot/internal/db"
-	"github.com/Laky-64/TestFlightTrackBot/internal/telegram/core"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/core"
 	"time"
 )
 

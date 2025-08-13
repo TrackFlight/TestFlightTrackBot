@@ -2,9 +2,9 @@ package bot
 
 import (
 	"github.com/GoBotApiOfficial/gobotapi/filters"
-	"github.com/Laky-64/TestFlightTrackBot/internal/telegram"
-	"github.com/Laky-64/TestFlightTrackBot/internal/telegram/handlers"
-	"github.com/Laky-64/TestFlightTrackBot/internal/telegram/handlers/admin"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/handlers"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/handlers/admin"
 )
 
 func (b *Bot) setupHandlers() {

@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/Laky-64/TestFlightTrackBot/internal/api/middleware"
-	"github.com/Laky-64/TestFlightTrackBot/internal/api/types"
-	"github.com/Laky-64/TestFlightTrackBot/internal/api/utils"
-	"github.com/Laky-64/TestFlightTrackBot/internal/db"
-	"github.com/Laky-64/TestFlightTrackBot/internal/translator"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/api/middleware"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/api/types"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/api/utils"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/translator"
 	"golang.org/x/text/language"
 	"net/http"
 )

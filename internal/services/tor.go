@@ -2,8 +2,8 @@ package services
 
 import (
 	"context"
-	"github.com/Laky-64/TestFlightTrackBot/internal/tor"
 	"github.com/Laky-64/gologging"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/tor"
 	"time"
 )
 

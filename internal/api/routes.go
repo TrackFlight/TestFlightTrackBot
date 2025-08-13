@@ -1,10 +1,10 @@
 package api
 
 import (
-	"github.com/Laky-64/TestFlightTrackBot/internal/api/handlers"
-	"github.com/Laky-64/TestFlightTrackBot/internal/api/middleware"
-	"github.com/Laky-64/TestFlightTrackBot/internal/config"
-	"github.com/Laky-64/TestFlightTrackBot/internal/db"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/api/handlers"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/api/middleware"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"log"

@@ -2,11 +2,11 @@ package services
 
 import (
 	"context"
-	"github.com/Laky-64/TestFlightTrackBot/internal/config"
-	"github.com/Laky-64/TestFlightTrackBot/internal/db"
-	"github.com/Laky-64/TestFlightTrackBot/internal/telegram/bot"
-	"github.com/Laky-64/TestFlightTrackBot/internal/testflight"
-	"github.com/Laky-64/TestFlightTrackBot/internal/utils"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/bot"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/testflight"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/utils"
 	"time"
 )
 

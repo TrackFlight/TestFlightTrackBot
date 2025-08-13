@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/Laky-64/TestFlightTrackBot/internal/db/models"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/db/models"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 

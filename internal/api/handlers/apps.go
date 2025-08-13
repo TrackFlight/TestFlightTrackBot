@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/Laky-64/TestFlightTrackBot/internal/api/types"
-	"github.com/Laky-64/TestFlightTrackBot/internal/api/utils"
-	"github.com/Laky-64/TestFlightTrackBot/internal/db"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/api/types"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/api/utils"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
 	"github.com/jackc/pgx/v5/pgtype"
 	"net/http"
 )

@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"github.com/Laky-64/TestFlightTrackBot/internal/api/utils"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/api/utils"
 	"math"
 	"net/http"
 	"sync"

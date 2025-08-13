@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"github.com/GoBotApiOfficial/gobotapi/methods"
 	"github.com/GoBotApiOfficial/gobotapi/types"
-	"github.com/Laky-64/TestFlightTrackBot/internal/config"
-	"github.com/Laky-64/TestFlightTrackBot/internal/db"
-	"github.com/Laky-64/TestFlightTrackBot/internal/telegram/bot"
 	"github.com/Laky-64/gologging"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/bot"
 	"time"
 )
 
