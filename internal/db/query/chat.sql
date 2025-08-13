@@ -37,8 +37,10 @@ WITH normalized AS (
 ),
 ins AS (
     INSERT INTO links (url)
-    SELECT url FROM normalized
-    ON CONFLICT (url) DO NOTHING
+    SELECT url FROM normalized n
+    WHERE NOT EXISTS (
+        SELECT 1 FROM links l WHERE l.url = n.url
+    )
     RETURNING id, url, updated_at
 ),
 link_row AS (
