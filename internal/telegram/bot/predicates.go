@@ -17,6 +17,25 @@ func CallbackQueryData(data string) filters.FilterOperand {
 	}
 }
 
+func IsBackupFile() filters.FilterOperand {
+	return func(df *filters.DataFilter) bool {
+		message, ok := df.RawUpdate.(types.Message)
+		if !ok {
+			return false
+		}
+		if message.Document == nil {
+			return false
+		}
+		if message.Document.FileName == "" {
+			return false
+		}
+		if strings.HasSuffix(message.Document.FileName, ".sql") {
+			return true
+		}
+		return false
+	}
+}
+
 func matchExactTranslation(key translator.Key) filters.FilterOperand {
 	texts := translator.TAll(key)
 	return func(df *filters.DataFilter) bool {

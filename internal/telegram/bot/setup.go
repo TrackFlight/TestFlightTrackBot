@@ -34,4 +34,14 @@ func (b *Bot) setupHandlers() {
 		admin.SearchVar,
 		filters.Private(),
 	)
+	b.OnAdminCommand(
+		"backup",
+		admin.ExecuteBackup,
+		filters.Private(),
+	)
+	b.OnAdminMessage(
+		admin.RestoreBackup,
+		filters.Private(),
+		IsBackupFile(),
+	)
 }

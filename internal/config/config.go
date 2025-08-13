@@ -10,6 +10,7 @@ import (
 func Load() (*Config, error) {
 	cfg := &Config{
 		AdminID:       int64(getEnvInt("ADMIN_USER_ID", 0)),
+		BackupChatID:  int64(getEnvInt("BACKUP_CHAT_ID", 0)),
 		DBUser:        os.Getenv("DB_USER"),
 		DBPassword:    os.Getenv("DB_PASSWORD"),
 		DBName:        os.Getenv("DB_NAME"),
@@ -37,6 +38,9 @@ func Load() (*Config, error) {
 	}
 	if cfg.AdminID == 0 {
 		return nil, errors.New("ADMIN_USER_ID environment variable not set or invalid")
+	}
+	if cfg.BackupChatID == 0 {
+		return nil, errors.New("BACKUP_CHAT_ID environment variable not set or invalid")
 	}
 	return cfg, nil
 }

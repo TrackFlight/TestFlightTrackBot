@@ -1,7 +1,8 @@
 package config
 
 type Config struct {
-	AdminID int64
+	AdminID      int64
+	BackupChatID int64
 
 	DBUser     string
 	DBPassword string

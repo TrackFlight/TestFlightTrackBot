@@ -24,4 +24,5 @@ func StartAll(
 
 	go startTestflight(ctx, rateLimit, b, cfg, dbCtx, tfClient)
 	go startTorRotate(ctx, tfClient.TorClient)
+	go startDbBackup(ctx, b, cfg)
 }
