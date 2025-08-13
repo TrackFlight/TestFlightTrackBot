@@ -38,6 +38,8 @@
   "NOTIFICATION_SETTINGS_HEADER": "Notification Settings",
   "NOTIFICATION_SETTINGS_OPEN_DESC": "Notified when the link opens.",
   "NOTIFICATION_SETTINGS_OPEN_TITLE": "Available Notifications",
+  "NO_RESULTS_DESC": "There were no results for \"{{.UserInput}}\"",
+  "NO_RESULTS_TITLE": "No Results",
   "REMOVE_APP_CONFIRM_DESC": "Are you sure you want to remove this app? All associated beta links will be deleted.",
   "REMOVE_APP_CONFIRM_TITLE": "Remove App",
   "REMOVE_BTN": "Remove",
