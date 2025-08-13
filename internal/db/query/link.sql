@@ -1,7 +1,7 @@
 -- name: GetUsedLinks :many
 SELECT
     links.id,
-    links.url,
+    ('https://' || links.url)::text AS url,
     links.app_id,
     links.status,
     CASE
