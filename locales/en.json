@@ -28,6 +28,7 @@
   "LINK_ALREADY_FOLLOWING": "Link Already Tracking",
   "LINK_AMOUNT_ONE": "{{.Amount}} link",
   "LINK_AMOUNT_OTHER": "{{.Amount}} links",
+  "LINK_NOT_PUBLIC": "This TestFlight beta is invite-only. You need the link to join.",
   "LINK_REMOVED": "Link Removed",
   "MAX_FOLLOWING_LINKS_LIMIT": "You can only track up to {{.Limit}} links at a time.",
   "NEW_VAR_ALREADY_EXISTS_ADM": "❗️ \u003cb\u003eVariable Already Exists\u003c/b\u003e\nThe variable \u003ccode\u003e{{.VarName}}\u003c/code\u003e is already defined. Use a different name or update its value.",
