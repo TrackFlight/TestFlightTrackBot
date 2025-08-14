@@ -4,7 +4,8 @@ SELECT
 FROM apps
 WHERE levenshtein(lower(app_name), lower(@name::text))::float / GREATEST(length(app_name) - length(@name::text), 1) <= 1.4
 ORDER BY
-    (lower(app_name) LIKE lower(@name || '%')) DESC,
+    ((lower(app_name) LIKE lower(@name || '%'))::int * 100) DESC,
+    ((lower(app_name) LIKE lower('%' || @name || '%'))::int * 50) DESC,
     levenshtein(left(lower(app_name), 3), left(lower(@name::text), 3))::float,
     levenshtein(lower(app_name), lower(@name::text))::float / GREATEST(length(app_name) - length(@name), 1)
 LIMIT 5;
