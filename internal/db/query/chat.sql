@@ -78,12 +78,12 @@ ins_cl AS (
     RETURNING link_id
 )
 SELECT
-    ic.link_id  AS id,
+    ic.link_id AS id,
     COALESCE(el.app_id, -ic.link_id)::bigint AS entity_id,
     lr.url::text AS link_url,
     el.status,
     el.last_availability,
-    el.is_public::bool AS is_public,
+    COALESCE(el.is_public, false)::boolean AS is_public,
     lr.updated_at   AS last_update
 FROM ins_cl ic
 LEFT JOIN links el      ON el.id = ic.link_id
