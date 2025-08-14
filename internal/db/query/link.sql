@@ -27,7 +27,7 @@ JOIN chats ON chats.id = chat_links.chat_id;
 
 
 -- name: GetLinksByApps :many
--- cache: type:get-many table:app_links key:app_id ttl:1d
+-- cache: type:get-many table:app_links key:app_id ttl:1d version_by:links.id
 SELECT
     links.id,
     (
