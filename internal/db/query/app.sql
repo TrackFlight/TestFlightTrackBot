@@ -11,7 +11,7 @@ LIMIT 5;
 
 
 -- name: GetTrending :many
--- cache: type:get table:trending_apps ttl:1d
+-- cache: type:get table:trending_apps ttl:1h
 SELECT
     a.id,
     a.app_name,
