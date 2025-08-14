@@ -4,6 +4,7 @@ services:
       context: miniapp
       dockerfile: Dockerfile
     container_name: mini-app
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
