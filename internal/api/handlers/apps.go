@@ -5,7 +5,6 @@ import (
 	"github.com/TrackFlight/TestFlightTrackBot/internal/api/types"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/api/utils"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
-	"github.com/jackc/pgx/v5/pgtype"
 	"net/http"
 )
 
@@ -76,31 +75,32 @@ func SearchApps(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 
 func GetTrendingApps(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		trendingApps, err := dbCtx.AppStore.GetTrending()
+		trendingAppIDs, err := dbCtx.AppStore.GetTrending()
 		if err != nil {
 			utils.JSONError(w, types.ErrInternalServer, "Error fetching trending apps", http.StatusInternalServerError)
 			return
 		}
 
-		var orderKeys []int64
+		appsInfo, err := dbCtx.AppStore.GetAppsInfo(trendingAppIDs)
+		if err != nil {
+			utils.JSONError(w, types.ErrInternalServer, "Error fetching app info", http.StatusInternalServerError)
+			return
+		}
+
 		result := make(map[int64]*types.TrendingApp)
-		for _, app := range trendingApps {
-			result[app.ID] = &types.TrendingApp{
+		for _, app := range appsInfo {
+			result[app.EntityID] = &types.TrendingApp{
 				BaseApp: types.BaseApp{
-					ID: app.ID,
-					Name: pgtype.Text{
-						String: app.AppName,
-						Valid:  true,
-					},
+					ID:          app.EntityID,
+					Name:        app.AppName,
 					IconURL:     app.IconURL,
 					Description: app.Description,
 					Followers:   app.Followers,
 				},
 			}
-			orderKeys = append(orderKeys, app.ID)
 		}
 
-		trendingAppsLinks, err := dbCtx.LinkStore.GetLinksByApps(orderKeys)
+		trendingAppsLinks, err := dbCtx.LinkStore.GetLinksByApps(trendingAppIDs)
 		if err != nil {
 			utils.JSONError(w, types.ErrInternalServer, "Error fetching links for trending apps", http.StatusInternalServerError)
 			return
@@ -123,7 +123,7 @@ func GetTrendingApps(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) 
 		}
 
 		var orderedResult []*types.TrendingApp
-		for _, key := range orderKeys {
+		for _, key := range trendingAppIDs {
 			if app, exists := result[key]; exists {
 				orderedResult = append(orderedResult, app)
 			}

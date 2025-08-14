@@ -13,14 +13,10 @@ LIMIT 5;
 -- name: GetTrending :many
 -- cache: type:get table:trending_apps ttl:1h
 SELECT
-    a.id,
-    a.app_name,
-    a.icon_url,
-    a.description,
-    COUNT(DISTINCT cl.chat_id) AS followers
-FROM links l
+    a.id
+FROM apps a
+JOIN links l ON l.app_id = a.id
 JOIN chat_links cl ON cl.link_id = l.id
-JOIN apps a ON a.id = l.app_id
 GROUP BY a.id
 ORDER BY
     COUNT(DISTINCT cl.chat_id) * 0.2 +
