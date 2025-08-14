@@ -134,7 +134,7 @@ ranked_links AS (
     SELECT
         cl.link_id,
         cl.chat_id,
-        ROW_NUMBER() OVER (PARTITION BY cl.chat_id ORDER BY l.created_at) AS rn
+        ROW_NUMBER() OVER (PARTITION BY cl.chat_id ORDER BY cl.created_at) AS rn
     FROM chat_links cl
     JOIN links l ON l.id = cl.link_id
 ),
