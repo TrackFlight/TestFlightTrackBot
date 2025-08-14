@@ -24,6 +24,7 @@ type {{$name}} struct {
 {{- $hasResults := gt (len $filteredColumns) 0 -}}
 {{- $cacheOptions := $queryOptions.Cache}}
 {{- $tableSingularName := $cacheOptions.Table | Singular}}
+{{- $cacheVersionManyGetKey := printf "\"%s:versions\"" $tableSingularName}}
 {{- $isManyGet := eq $cacheOptions.Kind "get-many"}}
 {{- $allowedGetCache := and $cacheOptions.Allow (not (eq .Cmd ":exec")) (or (eq $cacheOptions.Kind "get") (eq $cacheOptions.Kind "get-many")) (not $isBulk)}}
 {{- $allowedVersioning := and $allowedGetCache $cacheOptions.VersionBy}}
@@ -163,6 +164,12 @@ bulkParams []{{$bulkParamsName}}
             ).Field(valkeyField).Build(),
         )
     }
+    {{- if and $allowedVersioning}}
+    cmdList = append(
+        cmdList,
+        ctx.redis.B().Hget().Key({{$cacheVersionManyGetKey}}).Field(valkeyVersionField).Build(),
+    )
+    {{- end}}
     {{- end}}
     res := ctx.redis.DoMulti(
         ctx.cx,
@@ -170,15 +177,40 @@ bulkParams []{{$bulkParamsName}}
         cmdList...
         {{- else}}
         ctx.redis.B().Hget().Key(valkeyKey).Field(valkeyField).Build(),
-        {{- end}}
         {{- if $allowedVersioning}}
         ctx.redis.B().Hget().Key(valkeyKey).Field(valkeyVersionField).Build(),
         {{- end}}
+        {{- end}}
     )
     {{- if $allowedSplitCacheSave}}
+    {{- if $allowedVersioning}}
+    {{$filteredSplitCacheName}} := {{$cacheOptions.Key | ToCamelCase}}
+    if res[len(res)-1].Error() == nil {
+    var vMap map[{{$versionType}}]int64
+    if err := res[len(res)-1].DecodeJSON(&vMap); err == nil {
+    vMapIDs := slices.Collect(maps.Keys(vMap))
+    versionKeys := make([]string, len(vMapIDs))
+    for idx, vMapID := range vMapIDs {
+        versionKeys[idx] = {{$versioningField}}, vMapID)
+    }
+    verRes, errVer := ctx.redis.Do(
+        ctx.cx,
+        ctx.redis.B().Mget().Key(versionKeys...).Build(),
+    ).AsIntSlice()
+    if errVer == nil {
+        var validList []{{$versionType}}
+        for idx, vMapID := range vMapIDs {
+        	if vMap[vMapID] != verRes[idx] && verRes[idx] != 0 {
+            	validList = append(validList, vMapID)
+            	break
+            }
+        }
+        {{$filteredSplitCacheName}} = []{{ToGoType $cacheOptions.KeyColumn true}}{}
+    {{- else}}
     var {{$filteredSplitCacheName}} []{{ToGoType $cacheOptions.KeyColumn true}}
-    for idx, r := range res {
-    	if r.Error() == nil {
+    {{- end}}
+    for idx, r := range res{{if $allowedVersioning}}[:len(res)-1]{{end}} {
+    	if r.Error() == nil{{if $allowedVersioning}} && slices.Contains(validList, {{$cacheOptions.Key | ToCamelCase}}[idx]){{end}} {
     		var item {{if $isManyGet}}[]{{end}}{{$returnName}}
     		if err := r.DecodeJSON(&item); err == nil {
     			i = append(i, item{{if $isManyGet}}...{{end}})
@@ -187,8 +219,12 @@ bulkParams []{{$bulkParamsName}}
     	}
     	{{$filteredSplitCacheName}} = append({{$filteredSplitCacheName}}, {{$cacheOptions.Key | ToCamelCase}}[idx])
     }
+    {{- if and $allowedVersioning $allowedSplitCacheSave}}
+            }
+        }
+    }
     {{- end}}
-    {{- if not $allowedSplitCacheSave}}
+    {{- else}}
     if res[0].Error() == nil {{- if $allowedVersioning}} && res[1].Error() == nil{{- end}} {
         {{- if $allowedVersioning}}
         var vMap map[{{$versionType}}]int64
@@ -227,6 +263,11 @@ bulkParams []{{$bulkParamsName}}
     {{- end }}
     {{- if $allowedVersioning}}
     var versionKeys []string
+    {{- if $allowedSplitCacheSave}}
+    for _, r := range i {
+        versionKeys = append(versionKeys, {{$versioningField}}, r.{{$fieldName}}))
+    }
+    {{- end}}
     {{- end}}
     {{- if $allowedSplitCacheSave}}
     if len({{$filteredSplitCacheName}}) > 0 {
@@ -382,6 +423,13 @@ bulkParams []{{$bulkParamsName}}
 		}
 		{{- end}}
     }
+    {{- end}}
+    {{- if and $allowedVersioning $allowedSplitCacheSave}}
+    cmdSaveList = append(
+        cmdSaveList,
+        ctx.redis.B().Hset().Key({{$cacheVersionManyGetKey}}).FieldValue().FieldValue(valkeyVersionField, string(jsonVer)).Build(),
+        ctx.redis.B().Expire().Key({{$cacheVersionManyGetKey}}).Seconds({{$cacheOptions.TTL}}).Build(),
+    )
     {{- end}}
     ctx.redis.DoMulti(
         ctx.cx,
