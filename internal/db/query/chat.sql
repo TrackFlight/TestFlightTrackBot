@@ -41,13 +41,13 @@ ins AS (
     WHERE NOT EXISTS (
         SELECT 1 FROM links l WHERE l.url = n.url
     )
-    RETURNING id, url, updated_at
+    RETURNING id, app_id, url, status, is_public, last_availability, updated_at
 ),
 link_row AS (
-    SELECT id, url, updated_at
+    SELECT id, app_id, url, status, is_public, last_availability, updated_at
     FROM ins
     UNION ALL
-    SELECT l.id, l.url, l.updated_at
+    SELECT l.id, l.app_id, l.url, l.status, l.is_public, l.last_availability, l.updated_at
     FROM links l
     JOIN normalized n ON l.url = n.url
 ),
@@ -68,26 +68,26 @@ limit_check AS (
     FROM tracking
 ),
 ins_cl AS (
-    INSERT INTO chat_links (chat_id, link_id, notify_available, notify_closed)
+    INSERT INTO chat_links (chat_id, link_id, notify_available, notify_closed, last_notified_status)
     SELECT
         @chat_id,
         link_row.id,
         (@notify_available::boolean AND links_count < @free_limit::bigint),
-        (@notify_closed::boolean AND links_count < @free_limit::bigint)
+        (@notify_closed::boolean AND links_count < @free_limit::bigint),
+        link_row.status
     FROM link_row, tracking, limit_check
     RETURNING link_id
 )
 SELECT
     ic.link_id AS id,
-    COALESCE(el.app_id, -ic.link_id)::bigint AS entity_id,
+    COALESCE(lr.app_id, -ic.link_id)::bigint AS entity_id,
     lr.url::text AS link_url,
-    el.status,
-    el.last_availability,
-    COALESCE(el.is_public, false)::boolean AS is_public,
-    lr.updated_at   AS last_update
+    lr.status,
+    lr.last_availability,
+    lr.is_public AS is_public,
+    lr.updated_at AS last_update
 FROM ins_cl ic
-LEFT JOIN links el      ON el.id = ic.link_id
-LEFT JOIN link_row lr   ON lr.id = ic.link_id;
+JOIN link_row lr ON lr.id = ic.link_id;
 
 
 -- name: UpdateNotificationSettings :exec
