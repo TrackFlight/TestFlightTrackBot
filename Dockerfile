@@ -3,10 +3,13 @@ WORKDIR /app
 RUN apk add --no-cache git
 RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 COPY . .
+RUN go get ./cmd/gen_translator_keys
 RUN go install ./cmd/gen_translator_keys \
  && gen_translator_keys
+RUN go get ./cmd/sqlgen
 RUN go install ./cmd/sqlgen \
  && sqlgen
+RUN go get ./cmd/bot
 RUN go install ./cmd/bot
 
 FROM alpine:latest
