@@ -132,28 +132,30 @@ WITH input_data AS (
 ),
 ranked_links AS (
     SELECT
+        ROW_NUMBER() OVER (PARTITION BY cl.chat_id ORDER BY cl.created_at) AS rn,
         cl.link_id,
         cl.chat_id,
-        ROW_NUMBER() OVER (PARTITION BY cl.chat_id ORDER BY cl.created_at) AS rn
+        cl.last_notified_status,
+        cl.notify_available,
+        cl.notify_closed
     FROM chat_links cl
-    JOIN links l ON l.id = cl.link_id
 ),
 candidates AS (
     SELECT
-        cl.chat_id,
-        cl.link_id,
+        rl.chat_id,
+        rl.link_id,
         i.status
     FROM input_data i
-    JOIN chat_links cl ON cl.link_id = i.link_id
-    JOIN ranked_links rl ON rl.link_id = cl.link_id AND rl.chat_id = cl.chat_id
-    WHERE cl.last_notified_status IS DISTINCT FROM i.status
+    JOIN ranked_links rl ON rl.link_id = i.link_id
+    WHERE rl.last_notified_status IS DISTINCT FROM i.status
+    AND (rl.notify_available OR rl.notify_closed)
     AND (
-        cl.notify_available = (i.status = 'available')
-        OR cl.notify_closed = (i.status != 'available')
+        rl.notify_available = (i.status = 'available')
+        OR rl.notify_closed = (i.status != 'available')
     )
     AND (
         EXISTS (
-            SELECT 1 FROM premium_users pu WHERE pu.chat_id = cl.chat_id
+            SELECT 1 FROM premium_users pu WHERE pu.chat_id = rl.chat_id
         )
         OR rl.rn <= @free_limit::bigint
     )
