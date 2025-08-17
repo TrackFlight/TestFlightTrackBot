@@ -139,6 +139,7 @@ ranked_links AS (
         cl.notify_available,
         cl.notify_closed
     FROM chat_links cl
+    WHERE cl.notify_available OR cl.notify_closed
 ),
 candidates AS (
     SELECT
@@ -148,7 +149,6 @@ candidates AS (
     FROM input_data i
     JOIN ranked_links rl ON rl.link_id = i.link_id
     WHERE rl.last_notified_status IS DISTINCT FROM i.status
-    AND (rl.notify_available OR rl.notify_closed)
     AND (
         rl.notify_available = (i.status = 'available')
         OR rl.notify_closed = (i.status != 'available')
