@@ -68,7 +68,7 @@ func (c *Client) Check(links []db.GetUsedLinksLinkRow) (map[string]Result, error
 					status = models.LinkStatusEnumClosed
 				} else {
 					rawStatus := RegexStatus.FindAllStringSubmatch(bodyString, -1)
-					if rawStatus[0][1] == "This beta is full." {
+					if rawStatus[0][1] == "This beta is full." || rawStatus[0][1] == "此 Beta 版本的测试员已满。" {
 						status = models.LinkStatusEnumFull
 					} else {
 						status = models.LinkStatusEnumAvailable
