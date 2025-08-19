@@ -18,4 +18,7 @@ var (
 	RegexLink = regexp.MustCompile(
 		`^https?://testflight\.apple\.com/join/[A-Za-z0-9]+$`,
 	)
+	RegexAwesomeTestFlight = regexp.MustCompile(
+		`(^|\n)\|\s*(.*?)\s*\|\s*\[(https?://testflight\.apple\.com/join/\w+)][^|]*\s*\|\s*([YFND])`,
+	)
 )
