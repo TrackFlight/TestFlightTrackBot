@@ -5,6 +5,7 @@ import (
 	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/core"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/translator"
+	"html"
 )
 
 func Start(ctx *core.UpdateContext, message types.Message) error {
@@ -13,7 +14,7 @@ func Start(ctx *core.UpdateContext, message types.Message) error {
 		ctx.Translator.TWithData(
 			translator.StartMessage,
 			map[string]string{
-				"Mention": telegram.FormatName(*message.From),
+				"Mention": html.EscapeString(telegram.FormatName(*message.From)),
 				"BotName": telegram.Mention(ctx.Api.Self()),
 			},
 		),

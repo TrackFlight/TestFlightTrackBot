@@ -3,6 +3,7 @@ package telegram
 import (
 	"fmt"
 	"github.com/GoBotApiOfficial/gobotapi/types"
+	"html"
 )
 
 func FormatName(user types.User) string {
@@ -16,6 +17,6 @@ func Mention(user types.User) string {
 	return fmt.Sprintf(
 		`<a href="tg://user?id=%d">%s</a>`,
 		user.ID,
-		FormatName(user),
+		html.EscapeString(FormatName(user)),
 	)
 }
