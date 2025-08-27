@@ -27,6 +27,12 @@ func Start(ctx *core.UpdateContext, message types.Message) error {
 						},
 					},
 				},
+				{
+					{
+						Text: ctx.Translator.T(translator.SourceCodeBtn),
+						URL:  "https://github.com/TrackFlight/TestFlightTrackBot",
+					},
+				},
 			},
 		},
 	)
