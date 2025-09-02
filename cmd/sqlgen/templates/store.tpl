@@ -295,7 +295,6 @@ bulkParams []{{$bulkParamsName}}
     {{- $tmpVarName := "i"}}
     {{- if $isMany}}
     {{- $tmpVarName = "item"}}
-    defer rows.Close()
     if errQuery != nil {
         return {{if $hasResults -}}nil,{{end}} errQuery
     }
@@ -332,6 +331,9 @@ bulkParams []{{$bulkParamsName}}
     {{- end }}
     )
     if errScan != nil {
+        {{- if $isMany}}
+        rows.Close()
+        {{- end}}
         if errors.Is(errScan, pgx.ErrNoRows) {
         	errScan = nil
         }
@@ -348,6 +350,7 @@ bulkParams []{{$bulkParamsName}}
         iVersions = append(iVersions, itemVersion)
         {{- end}}
     }
+    rows.Close()
     if rows.Err() != nil {
         return {{if $hasResults -}}nil,{{end}} rows.Err()
     }
