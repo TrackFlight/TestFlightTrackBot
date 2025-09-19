@@ -41,13 +41,13 @@ ins AS (
     WHERE NOT EXISTS (
         SELECT 1 FROM links l WHERE l.url = n.url
     )
-    RETURNING id, app_id, url, status, is_public, last_availability, updated_at
+    RETURNING id, app_id, url, status, is_public, current_version, last_availability, updated_at
 ),
 link_row AS (
-    SELECT id, app_id, url, status, is_public, last_availability, updated_at
+    SELECT id, app_id, url, status, is_public, current_version, last_availability, updated_at
     FROM ins
     UNION ALL
-    SELECT l.id, l.app_id, l.url, l.status, l.is_public, l.last_availability, l.updated_at
+    SELECT l.id, l.app_id, l.url, l.status, l.is_public, l.current_version, l.last_availability, l.updated_at
     FROM links l
     JOIN normalized n ON l.url = n.url
 ),
@@ -68,13 +68,13 @@ limit_check AS (
     FROM tracking
 ),
 ins_cl AS (
-    INSERT INTO chat_links (chat_id, link_id, notify_available, notify_closed, last_notified_status)
+    INSERT INTO chat_links (chat_id, link_id, notify_available, notify_closed, last_notified_version)
     SELECT
         @chat_id,
         link_row.id,
         (@notify_available::boolean AND links_count < @free_limit::bigint),
         (@notify_closed::boolean AND links_count < @free_limit::bigint),
-        link_row.status
+        link_row.current_version
     FROM link_row, tracking, limit_check
     RETURNING link_id
 )

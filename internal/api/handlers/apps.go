@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/TrackFlight/TestFlightTrackBot/internal/api/types"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/api/utils"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
-	"net/http"
 )
 
 func SearchApps(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {

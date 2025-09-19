@@ -3,6 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"maps"
+	"net/http"
+	"slices"
+	"strconv"
+
 	"github.com/TrackFlight/TestFlightTrackBot/internal/api/middleware"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/api/types"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/api/utils"
@@ -12,10 +17,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"maps"
-	"net/http"
-	"slices"
-	"strconv"
 )
 
 func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {

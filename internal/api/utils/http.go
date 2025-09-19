@@ -3,8 +3,9 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/TrackFlight/TestFlightTrackBot/internal/api/types"
 	"net/http"
+
+	"github.com/TrackFlight/TestFlightTrackBot/internal/api/types"
 )
 
 func JSONErrorFloodWait(w http.ResponseWriter, seconds int) {
