@@ -3,6 +3,12 @@ package services
 import (
 	"context"
 	"errors"
+	"fmt"
+	"maps"
+	"slices"
+	"sync"
+	"time"
+
 	"github.com/GoBotApiOfficial/gobotapi/types"
 	"github.com/Laky-64/gologging"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
@@ -14,10 +20,6 @@ import (
 	"github.com/TrackFlight/TestFlightTrackBot/internal/translator"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/utils"
 	"github.com/jackc/pgx/v5"
-	"maps"
-	"slices"
-	"sync"
-	"time"
 )
 
 func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.Bot, cfg *config.Config, dbCtx *db.DB, tfClient *testflight.Client) {
