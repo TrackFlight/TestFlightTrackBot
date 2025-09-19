@@ -85,9 +85,17 @@ func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.B
 			}
 
 			if len(updates) > 0 {
-				if err = dbCtx.LinkStore.BulkUpdate(updates); err != nil && !errors.Is(err, pgx.ErrNoRows) {
+				updatedLinks, err := dbCtx.LinkStore.BulkUpdate(updates)
+				if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 					gologging.ErrorF("bulk update links: %v", err)
 					continue
+				}
+				mapLinksVersions := make(map[int64]int64)
+				for _, ul := range updatedLinks {
+					mapLinksVersions[ul.LinkID] = ul.CurrentVersion
+				}
+				for id, ul := range requestNotifications {
+					requestNotifications[id].Version = mapLinksVersions[ul.LinkID]
 				}
 				notifications, err := dbCtx.ChatStore.BulkUpdateNotifications(
 					requestNotifications,

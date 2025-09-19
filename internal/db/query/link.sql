@@ -53,7 +53,6 @@ ORDER BY links.created_at;
 
 -- name: BulkUpdate :many
 -- cache: type:update_version table:links key:link_ids ttl:1w
--- exclude: link_id
 WITH input_data AS (
     SELECT
         UNNEST(@link_ids::bigint[]) AS link_id,
@@ -69,6 +68,11 @@ SET status = i.status,
     WHEN i.status = 'available' THEN NOW()
         ELSE links.last_availability
     END,
+    current_version = CASE
+    WHEN links.status IS DISTINCT FROM i.status
+        THEN links.current_version + 1
+        ELSE links.current_version
+    END,
     is_public = i.is_public
 FROM input_data i
 LEFT JOIN apps ON apps.app_name = i.app_name
@@ -77,4 +81,4 @@ AND (
     links.status IS DISTINCT FROM i.status
     OR links.app_id IS DISTINCT FROM apps.id
     OR links.is_public IS DISTINCT FROM i.is_public
-) RETURNING links.id AS link_id;
+) RETURNING links.id AS link_id, links.current_version;

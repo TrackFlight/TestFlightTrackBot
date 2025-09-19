@@ -128,14 +128,15 @@ AND link_id = ANY(@link_ids::bigint[]);
 WITH input_data AS (
     SELECT
         UNNEST(@link_ids::bigint[]) AS link_id,
-        UNNEST(@statuses::link_status_enum[]) AS status
+        UNNEST(@statuses::link_status_enum[]) AS status,
+        UNNEST(@versions::bigint[]) AS version
 ),
 ranked_links AS (
     SELECT
         ROW_NUMBER() OVER (PARTITION BY cl.chat_id ORDER BY cl.created_at) AS rn,
         cl.link_id,
         cl.chat_id,
-        cl.last_notified_status,
+        cl.last_notified_version,
         cl.notify_available,
         cl.notify_closed
     FROM chat_links cl
@@ -145,10 +146,11 @@ candidates AS (
     SELECT
         rl.chat_id,
         rl.link_id,
+        i.version,
         i.status
     FROM input_data i
     JOIN ranked_links rl ON rl.link_id = i.link_id
-    WHERE rl.last_notified_status IS DISTINCT FROM i.status
+    WHERE rl.last_notified_version IS DISTINCT FROM i.version
     AND (
         rl.notify_available = (i.status = 'available')
         OR rl.notify_closed = (i.status != 'available')
@@ -162,17 +164,17 @@ candidates AS (
 ),
 notified AS (
     UPDATE chat_links cl
-    SET last_notified_status = fc.status, updated_at = NOW()
+    SET last_notified_version = fc.version, updated_at = NOW()
     FROM candidates fc
     WHERE cl.link_id = fc.link_id AND cl.chat_id = fc.chat_id
-    RETURNING cl.chat_id, cl.link_id, cl.last_notified_status AS status
+    RETURNING cl.chat_id, cl.link_id, fc.status
 )
 SELECT
     c.id AS chat_id,
     c.lang,
     a.app_name,
     l.url AS link_url,
-    notified.status
+    notified.status::link_status_enum AS status
 FROM notified
 JOIN links l ON l.id = notified.link_id
 JOIN chats c ON c.id = notified.chat_id
