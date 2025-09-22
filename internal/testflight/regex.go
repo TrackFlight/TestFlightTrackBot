@@ -4,7 +4,7 @@ import "regexp"
 
 var (
 	RegexAppName = regexp.MustCompile(
-		`<title>(?:Join the |加入 Beta 版“)([^<]+?)(?: beta|”) - TestFlight - Apple</title>`,
+		`<title>(?:Join the |加入 Beta 版“|Присоединяйтесь к тестированию бета-версии приложения «)([^<]+?)(?: beta|”|») - TestFlight - Apple</title>`,
 	)
 	RegexAppIcon = regexp.MustCompile(
 		`background-image: url\((https://[A-Za-z0-9./_-]+)\);`,
