@@ -2,8 +2,9 @@ package internal
 
 import (
 	"encoding/json"
-	"github.com/Laky-64/gologging"
 	"os"
+
+	"github.com/Laky-64/gologging"
 )
 
 func LoadSQLCConfig(path string) SQLCConfig {

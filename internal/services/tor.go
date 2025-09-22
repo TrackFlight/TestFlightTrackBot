@@ -2,9 +2,10 @@ package services
 
 import (
 	"context"
+	"time"
+
 	"github.com/Laky-64/gologging"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/tor"
-	"time"
 )
 
 func startTorRotate(ctx context.Context, t *tor.Client) {

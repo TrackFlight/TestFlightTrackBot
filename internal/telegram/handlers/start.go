@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"html"
+
 	"github.com/GoBotApiOfficial/gobotapi/types"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/core"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/translator"
-	"html"
 )
 
 func Start(ctx *core.UpdateContext, message types.Message) error {

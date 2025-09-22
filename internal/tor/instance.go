@@ -1,8 +1,9 @@
 package tor
 
 import (
-	"github.com/cretz/bine/tor"
 	"os"
+
+	"github.com/cretz/bine/tor"
 )
 
 type Instance struct {

@@ -1,9 +1,10 @@
 package tor
 
 import (
-	"github.com/cretz/bine/tor"
 	"math"
 	"os"
+
+	"github.com/cretz/bine/tor"
 )
 
 type RequestTransaction struct {

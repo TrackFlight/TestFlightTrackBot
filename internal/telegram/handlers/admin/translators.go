@@ -2,13 +2,14 @@ package admin
 
 import (
 	"fmt"
+	"html"
+	"strconv"
+	"strings"
+
 	"github.com/GoBotApiOfficial/gobotapi/parser"
 	"github.com/GoBotApiOfficial/gobotapi/types"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/core"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/translator"
-	"html"
-	"strconv"
-	"strings"
 )
 
 func EditVarAction(ctx *core.UpdateContext, message types.Message) error {

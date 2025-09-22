@@ -4,8 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"github.com/Laky-64/http"
 	"math/rand"
+
+	"github.com/Laky-64/http"
 )
 
 func loadUserAgents() ([]string, error) {

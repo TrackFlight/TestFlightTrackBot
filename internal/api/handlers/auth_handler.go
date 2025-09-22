@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/TrackFlight/TestFlightTrackBot/internal/api/types"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/api/utils"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/auth"
-	"net/http"
 )
 
 type ErrorResponse struct {

@@ -2,12 +2,13 @@ package services
 
 import (
 	"context"
+	"time"
+
 	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/bot"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/testflight"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/utils"
-	"time"
 )
 
 func StartAll(

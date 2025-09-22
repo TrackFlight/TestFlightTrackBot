@@ -6,13 +6,14 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
+	"log"
+	"os/exec"
+
 	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
 	"github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 	"github.com/valkey-io/valkey-go"
-	"log"
-	"os/exec"
 )
 
 //go:embed schema/*.sql

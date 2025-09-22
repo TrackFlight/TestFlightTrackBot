@@ -2,8 +2,9 @@ package telegram
 
 import (
 	"fmt"
-	"github.com/GoBotApiOfficial/gobotapi/types"
 	"html"
+
+	"github.com/GoBotApiOfficial/gobotapi/types"
 )
 
 func FormatName(user types.User) string {

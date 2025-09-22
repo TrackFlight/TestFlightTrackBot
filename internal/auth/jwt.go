@@ -2,10 +2,11 @@ package auth
 
 import (
 	"crypto/rand"
-	"github.com/Laky-64/gologging"
-	"github.com/golang-jwt/jwt/v5"
 	"strconv"
 	"time"
+
+	"github.com/Laky-64/gologging"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 var jwtSecret []byte

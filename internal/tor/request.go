@@ -1,9 +1,10 @@
 package tor
 
 import (
+	stdHttp "net/http"
+
 	"github.com/Laky-64/http"
 	"github.com/Laky-64/http/types"
-	stdHttp "net/http"
 )
 
 func (c *RequestTransaction) ExecuteRequest(uri string, userAgent string) (*types.HTTPResult, error) {

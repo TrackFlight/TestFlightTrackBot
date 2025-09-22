@@ -2,13 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/TrackFlight/TestFlightTrackBot/internal/api/middleware"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/api/types"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/api/utils"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/translator"
 	"golang.org/x/text/language"
-	"net/http"
 )
 
 func GetLangPack(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {

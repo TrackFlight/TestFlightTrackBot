@@ -1,11 +1,12 @@
 package middleware
 
 import (
-	"github.com/TrackFlight/TestFlightTrackBot/internal/api/utils"
 	"math"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/TrackFlight/TestFlightTrackBot/internal/api/utils"
 )
 
 type FloodInfo struct {

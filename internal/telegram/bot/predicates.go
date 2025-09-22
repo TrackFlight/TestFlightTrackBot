@@ -1,10 +1,11 @@
 package bot
 
 import (
+	"strings"
+
 	"github.com/GoBotApiOfficial/gobotapi/filters"
 	"github.com/GoBotApiOfficial/gobotapi/types"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/translator"
-	"strings"
 )
 
 func CallbackQueryData(data string) filters.FilterOperand {

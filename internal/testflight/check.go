@@ -2,12 +2,13 @@ package testflight
 
 import (
 	"errors"
+	"sync"
+
 	"github.com/Laky-64/http"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/db/models"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/tor"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/utils"
-	"sync"
 )
 
 func (c *Client) Check(links []db.GetUsedLinksLinkRow) (map[string]Result, error) {

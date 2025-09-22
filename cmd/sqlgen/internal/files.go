@@ -2,7 +2,6 @@ package internal
 
 import (
 	"bytes"
-	"github.com/Laky-64/gologging"
 	"go/format"
 	"maps"
 	"os"
@@ -10,6 +9,8 @@ import (
 	"slices"
 	"strings"
 	"text/template"
+
+	"github.com/Laky-64/gologging"
 )
 
 func GenerateModelFiles(schema Schema, t *template.Template, outDir string) {

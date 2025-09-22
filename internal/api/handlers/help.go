@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/TrackFlight/TestFlightTrackBot/internal/api/types"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
-	"net/http"
 )
 
 func GetConfig(cfg *config.Config) func(w http.ResponseWriter, r *http.Request) {

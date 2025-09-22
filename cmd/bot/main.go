@@ -2,6 +2,10 @@ package main
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/Laky-64/gologging"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/api"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
@@ -9,9 +13,6 @@ import (
 	"github.com/TrackFlight/TestFlightTrackBot/internal/services"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/bot"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/testflight"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {

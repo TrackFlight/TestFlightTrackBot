@@ -2,13 +2,14 @@ package internal
 
 import (
 	"fmt"
-	"github.com/Laky-64/gologging"
 	"regexp"
 	"slices"
 	"sort"
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/Laky-64/gologging"
 )
 
 func ToPascalCase(name string) string {

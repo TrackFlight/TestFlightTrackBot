@@ -1,15 +1,16 @@
 package api
 
 import (
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/TrackFlight/TestFlightTrackBot/internal/api/handlers"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/api/middleware"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	"log"
-	"net/http"
-	"time"
 )
 
 func Start(dbCtx *db.DB, cfg *config.Config) {

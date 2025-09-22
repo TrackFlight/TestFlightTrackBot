@@ -1,8 +1,9 @@
 package telegram
 
 import (
-	"github.com/GoBotApiOfficial/gobotapi/filters"
 	"time"
+
+	"github.com/GoBotApiOfficial/gobotapi/filters"
 )
 
 var SupportedBotAliases = []string{

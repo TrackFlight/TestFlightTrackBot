@@ -2,12 +2,13 @@ package middleware
 
 import (
 	"context"
-	"github.com/TrackFlight/TestFlightTrackBot/internal/api/types"
-	"github.com/TrackFlight/TestFlightTrackBot/internal/api/utils"
-	"github.com/TrackFlight/TestFlightTrackBot/internal/auth"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/TrackFlight/TestFlightTrackBot/internal/api/types"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/api/utils"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/auth"
 )
 
 const UserIDKey string = "userID"
