@@ -166,6 +166,7 @@ func startTestflight(ctx context.Context, rateLimit *utils.RateLimiter, b *bot.B
 						)
 					})
 				}
+				wg.Wait()
 			}
 		}
 	}

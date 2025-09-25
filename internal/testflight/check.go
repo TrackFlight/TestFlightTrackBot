@@ -95,6 +95,7 @@ func (c *Client) Check(links []db.GetUsedLinksLinkRow) (map[string]Result, error
 				mu.Unlock()
 				return
 			}
+			mu.Unlock()
 			results[link.URL] = Result{
 				Error: errors.New("failed to check link after 3 attempts"),
 			}
