@@ -16,7 +16,8 @@ func (c *RequestTransaction) ExecuteRequest(uri string, userAgent string) (*type
 			},
 		),
 		http.Headers(map[string]string{
-			"User-Agent": userAgent,
+			"User-Agent":      userAgent,
+			"Accept-Language": "en-US,en;q=0.9",
 		}),
 	)
 }
