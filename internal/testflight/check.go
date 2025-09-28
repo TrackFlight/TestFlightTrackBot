@@ -69,7 +69,7 @@ func (c *Client) Check(links []db.GetUsedLinksLinkRow) (map[string]Result, error
 					status = models.LinkStatusEnumClosed
 				} else {
 					rawStatus := RegexStatus.FindAllStringSubmatch(bodyString, -1)
-					if rawStatus[0][1] == "This beta is full." || rawStatus[0][1] == "此 Beta 版本的测试员已满。" || rawStatus[0][1] == "Dieser Beta-Test ist voll." || rawStatus[0][1] == "Штат тестировщиков для этой бета-версии укомплектован." {
+					if rawStatus[0][1] == "This beta is full." || rawStatus[0][1] == "此 Beta 版本的测试员已满。" || rawStatus[0][1] == "Dieser Beta-Test ist voll." || rawStatus[0][1] == "Штат тестировщиков для этой бета-версии укомплектован." || rawStatus[0][1] == "Cette version bêta de l’app a atteint le nombre maximum autorisé de testeurs." {
 						status = models.LinkStatusEnumFull
 					} else {
 						status = models.LinkStatusEnumAvailable
