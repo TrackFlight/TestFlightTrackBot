@@ -2,6 +2,7 @@ package tor
 
 import (
 	stdHttp "net/http"
+	"time"
 
 	"github.com/Laky-64/http"
 	"github.com/Laky-64/http/types"
@@ -19,5 +20,6 @@ func (c *RequestTransaction) ExecuteRequest(uri string, userAgent string) (*type
 			"User-Agent":      userAgent,
 			"Accept-Language": "en-US,en;q=0.9",
 		}),
+		http.Timeout(time.Second*5),
 	)
 }
