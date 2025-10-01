@@ -22,6 +22,7 @@ SELECT
     chat_links.notify_available,
     chat_links.notify_closed,
     links.last_availability,
+    chat_links.created_at AS added_at,
     links.updated_at AS last_update
 FROM chat_links
 JOIN links ON chat_links.link_id = links.id

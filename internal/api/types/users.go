@@ -28,6 +28,7 @@ type BaseLink struct {
 	URL              string                `json:"url"`
 	Status           models.LinkStatusEnum `json:"status"`
 	IsPublic         bool                  `json:"is_public"`
+	AddedAt          int64                 `json:"added_at"`
 	LastAvailability int64                 `json:"last_availability"`
 	LastUpdate       int64                 `json:"last_update"`
 }

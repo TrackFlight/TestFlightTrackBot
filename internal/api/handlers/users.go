@@ -49,6 +49,7 @@ func GetLinks(dbCtx *db.DB) func(w http.ResponseWriter, r *http.Request) {
 					URL:              item.LinkURL,
 					Status:           item.Status,
 					IsPublic:         item.IsPublic,
+					AddedAt:          item.AddedAt.Time.UTC().Unix(),
 					LastAvailability: timestamp,
 					LastUpdate:       item.LastUpdate.Time.UTC().Unix(),
 				},
