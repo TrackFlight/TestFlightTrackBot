@@ -183,6 +183,7 @@ func AddLink(dbCtx *db.DB, cfg *config.Config) func(w http.ResponseWriter, r *ht
 							IsPublic:         following.IsPublic,
 							LastAvailability: timestamp,
 							LastUpdate:       following.LastUpdate.Time.UTC().Unix(),
+							AddedAt:          following.AddedAt.Time.UTC().Unix(),
 						},
 						NotifyAvailable: newLink.NotifyAvailable,
 						NotifyClosed:    newLink.NotifyClosed,

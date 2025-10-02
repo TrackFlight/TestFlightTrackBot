@@ -53,12 +53,9 @@ link_row AS (
     JOIN normalized n ON l.url = n.url
 ),
 tracking AS (
-    SELECT COUNT(*) FILTER (
-        WHERE cl.chat_id = @chat_id
-        AND (cl.notify_available OR cl.notify_closed)
-    )
-    AS links_count
+    SELECT COUNT(*) AS links_count
     FROM chat_links cl
+    WHERE cl.chat_id = @chat_id
 ),
 limit_check AS (
     SELECT assert(
@@ -77,7 +74,7 @@ ins_cl AS (
         (@notify_closed::boolean AND links_count < @free_limit::bigint),
         link_row.current_version
     FROM link_row, tracking, limit_check
-    RETURNING link_id
+    RETURNING link_id, updated_at, created_at
 )
 SELECT
     ic.link_id AS id,
@@ -86,7 +83,8 @@ SELECT
     lr.status,
     lr.last_availability,
     lr.is_public AS is_public,
-    lr.updated_at AS last_update
+    lr.updated_at AS last_update,
+    ic.created_at AS added_at
 FROM ins_cl ic
 JOIN link_row lr ON lr.id = ic.link_id;
 
