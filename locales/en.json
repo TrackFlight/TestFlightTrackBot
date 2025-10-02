@@ -31,6 +31,8 @@
   "LINK_NOT_PUBLIC": "This TestFlight beta is invite-only. You need the link to join.",
   "LINK_REMOVED": "Link Removed",
   "MAX_FOLLOWING_LINKS_LIMIT": "You can only track up to {{.Limit}} links at a time.",
+  "MAX_LINKS_NOTIFICATIONS_LIMIT_DESC": "Maximum amount of links with notifications reached. Remove one to add another.",
+  "MAX_LINKS_NOTIFICATIONS_LIMIT_TITLE": "Limit of {{.Limit}} links Reached",
   "NEW_VAR_ALREADY_EXISTS_ADM": "❗️ \u003cb\u003eVariable Already Exists\u003c/b\u003e\nThe variable \u003ccode\u003e{{.VarName}}\u003c/code\u003e is already defined. Use a different name or update its value.",
   "NEW_VAR_ERROR_USAGE_ADM": "‼️ \u003cb\u003eInvalid Usage of /add_var Command\u003c/b\u003e\nUse: \u003ccode\u003e/add_var VAR_NAME VAR_VALUE\u003c/code\u003e\nE.g.: \u003ccode\u003e/add_var fox_cheer Hello, crafty fox! ✨🦊\u003c/code\u003e",
   "NEW_VAR_SUCCESS_ADM": "✅ \u003cb\u003eVariable Added\u003c/b\u003e",
