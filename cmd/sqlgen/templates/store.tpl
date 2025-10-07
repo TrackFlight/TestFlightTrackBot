@@ -14,7 +14,6 @@ import (
 {{$name := printf "%sStore" $rawName -}}
 type {{$name}} struct {
     db DBTX
-    cx context.Context
     redis valkey.Client
 }
 {{ range .Queries -}}
@@ -128,11 +127,11 @@ bulkParams []{{$bulkParamsName}}
         {{- end}}
     }
     {{- end}}
-    tx, err := ctx.db.Begin(ctx.cx)
+    tx, err := ctx.db.Begin(context.Background())
     if err != nil {
         return {{ if and (not (eq .Cmd ":exec")) $hasResults -}}nil, {{end}}err
     }
-    defer tx.Rollback(ctx.cx)
+    defer tx.Rollback(context.Background())
     totalSize := len({{- if not $isSingleBulk }}bulkParams{{else}}{{(index $arraysList 0).Name | ToCamelCase}}{{end}})
     for start := 0; start < totalSize; start += batchMaxSize {
         end := start + batchMaxSize
@@ -172,7 +171,7 @@ bulkParams []{{$bulkParamsName}}
     {{- end}}
     {{- end}}
     res := ctx.redis.DoMulti(
-        ctx.cx,
+        context.Background(),
         {{- if $allowedSplitCacheSave}}
         cmdList...
         {{- else}}
@@ -194,7 +193,7 @@ bulkParams []{{$bulkParamsName}}
         versionKeys[idx] = {{$versioningField}}, vMapID)
     }
     verRes, errVer := ctx.redis.Do(
-        ctx.cx,
+        context.Background(),
         ctx.redis.B().Mget().Key(versionKeys...).Build(),
     ).AsIntSlice()
     if errVer == nil {
@@ -235,7 +234,7 @@ bulkParams []{{$bulkParamsName}}
                 versionKeys[idx] = {{$versioningField}}, vMapID)
             }
             verRes, errVer := ctx.redis.Do(
-                ctx.cx,
+                context.Background(),
                 ctx.redis.B().Mget().Key(versionKeys...).Build(),
             ).AsIntSlice()
             if errVer == nil {
@@ -285,7 +284,7 @@ bulkParams []{{$bulkParamsName}}
     {{- else -}}
     Exec
     {{- end -}}(
-        ctx.cx,
+        context.Background(),
         {{$queryName}},
         {{- range .Params}}
         {{.Column.Name | ToCamelCase}}{{ if and $isBulk .Column.IsArray }}[start:end]{{end}}{{if and $allowedSplitCacheSave (eq .Column.Name $cacheOptions.Key)}}Filtered{{- end}},
@@ -360,7 +359,7 @@ bulkParams []{{$bulkParamsName}}
     versionKeys = append(versionKeys, {{$versioningField}}, i.{{$fieldName}}))
     {{- end}}
     verRes, _ := ctx.redis.Do(
-        ctx.cx,
+        context.Background(),
         ctx.redis.B().Mget().Key(versionKeys...).Build(),
     ).AsIntSlice()
     vMap := make(map[{{$versionType}}]int64)
@@ -435,7 +434,7 @@ bulkParams []{{$bulkParamsName}}
     )
     {{- end}}
     ctx.redis.DoMulti(
-        ctx.cx,
+        context.Background(),
         {{- if $allowedSplitCacheSave}}
         cmdSaveList...,
         {{- else}}
@@ -448,7 +447,7 @@ bulkParams []{{$bulkParamsName}}
     )
     {{- else if eq $cacheOptions.Kind "remove"}}
     ctx.redis.Do{{- if gt (len $cacheOptions.Fields) 1 }}Multi{{end}}(
-        ctx.cx,
+        context.Background(),
         {{- range $cacheOptions.Fields }}
         {{- if eq . "all"}}
         ctx.redis.B().Hdel().Key("{{$tableSingularName}}:list").Field("__all").Build(),
@@ -464,7 +463,7 @@ bulkParams []{{$bulkParamsName}}
     {{- end }}
     {{- if $isBulk }}
     }
-    if errComm := tx.Commit(ctx.cx); errComm != nil {
+    if errComm := tx.Commit(context.Background()); errComm != nil {
         return {{ if and (not (eq .Cmd ":exec")) $hasResults -}}nil, {{end}}errComm
     }
     {{- if $allowedUpdateVersions}}
@@ -489,7 +488,7 @@ bulkParams []{{$bulkParamsName}}
             ctx.redis.B().Expire().Key(updateKey).Seconds({{$cacheOptions.TTL}}).Build(),
         )
     }
-    ctx.redis.DoMulti(ctx.cx, cmdList...)
+    ctx.redis.DoMulti(context.Background(), cmdList...)
     {{- end}}
     {{- end}}
     {{- if $allowedSplitCacheSave}}

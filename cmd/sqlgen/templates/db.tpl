@@ -46,7 +46,7 @@ func new(db DBTX, redis valkey.Client) (*DB, error) {
     {{- end }}
     return &DB{
         {{- range .Queries }}
-        {{ . | ToPascalCase }}Store: &{{ . | ToPascalCase }}Store{db: db, redis: redis, cx: context.Background()},
+        {{ . | ToPascalCase }}Store: &{{ . | ToPascalCase }}Store{db: db, redis: redis},
         {{- end }}
     }, nil
 }
