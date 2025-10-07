@@ -5,26 +5,29 @@ import (
 	"github.com/GoBotApiOfficial/gobotapi/methods"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/tor"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/translator"
 )
 
 type UpdateContext struct {
 	Api        *gobotapi.PollingClient
 	DB         *db.DB
+	TorClient  *tor.Client
 	Config     *config.Config
 	Translator *translator.Translator
 }
 
 func NewLightContext(api *gobotapi.PollingClient, languageCode string) *UpdateContext {
-	return NewUpdateContext(api, nil, nil, languageCode)
+	return NewUpdateContext(api, nil, nil, nil, languageCode)
 }
 
-func NewUpdateContext(api *gobotapi.PollingClient, cfg *config.Config, dbCtx *db.DB, languageCode string) *UpdateContext {
+func NewUpdateContext(api *gobotapi.PollingClient, cfg *config.Config, torClient *tor.Client, dbCtx *db.DB, languageCode string) *UpdateContext {
 	return &UpdateContext{
 		Api:        api,
 		DB:         dbCtx,
 		Config:     cfg,
 		Translator: translator.New(languageCode),
+		TorClient:  torClient,
 	}
 }
 

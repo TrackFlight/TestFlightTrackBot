@@ -39,6 +39,11 @@ func (b *Bot) setupHandlers() {
 		admin.ExecuteBackup,
 		filters.Private(),
 	)
+	b.OnAdminCommand(
+		"stats",
+		admin.GetBotStats,
+		filters.Private(),
+	)
 	b.OnAdminMessage(
 		admin.RestoreBackup,
 		filters.Private(),

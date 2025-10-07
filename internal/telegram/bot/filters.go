@@ -30,7 +30,7 @@ func buildFilter[T filters.Filterable](b *Bot, handler func(*core.UpdateContext,
 		}
 		b.mutex.Lock(chatID)
 		languageCode, _ := b.db.ChatStore.GetLanguage(chatID, languageHint)
-		ctx := core.NewUpdateContext(b.Api, b.cfg, b.db, languageCode)
+		ctx := core.NewUpdateContext(b.Api, b.cfg, b.torClient, b.db, languageCode)
 		err := handler(ctx, update)
 		if err != nil {
 			_ = ctx.SendMessage(

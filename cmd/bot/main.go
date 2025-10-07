@@ -26,12 +26,12 @@ func main() {
 		gologging.Fatal(err)
 	}
 
-	b, err := bot.NewBot(cfg, dbCtx)
+	tfClient, err := testflight.NewClient()
 	if err != nil {
 		gologging.Fatal(err)
 	}
 
-	tfClient, err := testflight.NewClient()
+	b, err := bot.NewBot(cfg, dbCtx, tfClient.TorClient)
 	if err != nil {
 		gologging.Fatal(err)
 	}
