@@ -1,6 +1,7 @@
 package tor
 
 import (
+	"fmt"
 	stdHttp "net/http"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 
 func (c *RequestTransaction) ExecuteRequest(uri string, userAgent string) (*types.HTTPResult, error) {
 	return http.ExecuteRequest(
-		uri,
+		fmt.Sprintf("%s?nocache=%d", uri, time.Now().UnixNano()),
 		http.Transport(
 			&stdHttp.Transport{
 				DialContext: c.pickTorDialer().DialContext,
