@@ -3,14 +3,13 @@ package db
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"embed"
 	"fmt"
 	"log"
 	"os/exec"
 
 	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 	"github.com/valkey-io/valkey-go"
@@ -34,9 +33,6 @@ func NewDB(cfg *config.Config) (*DB, error) {
 	if err != nil {
 		log.Fatalf("goose: failed to open DB: %v", err)
 	}
-	defer func(db *sql.DB) {
-		_ = db.Close()
-	}(sqlConn)
 
 	goose.SetBaseFS(Files)
 	goose.SetLogger(goose.NopLogger())
@@ -45,7 +41,9 @@ func NewDB(cfg *config.Config) (*DB, error) {
 		return nil, fmt.Errorf("goose up: %w", err)
 	}
 
-	conn, err := pgx.Connect(context.Background(), dsn)
+	_ = sqlConn.Close()
+
+	conn, err := pgxpool.New(context.Background(), dsn)
 	if err != nil {
 		return nil, err
 	}
