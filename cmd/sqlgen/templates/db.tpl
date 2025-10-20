@@ -4,7 +4,7 @@ package db
 
 import (
     "context"
-    "github.com/jackc/pgx/v5/pgtype"
+    "github.com/jackc/pgx/v5/pgxpool"
 
     "github.com/jackc/pgx/v5"
     "github.com/jackc/pgx/v5/pgconn"
@@ -14,12 +14,11 @@ import (
 var batchMaxSize = 1000
 
 type DBTX interface {
+    Acquire(ctx context.Context) (c *pgxpool.Conn, err error)
     Begin(context.Context) (pgx.Tx, error)
 	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
 	Query(context.Context, string, ...interface{}) (pgx.Rows, error)
 	QueryRow(context.Context, string, ...interface{}) pgx.Row
-	LoadType(ctx context.Context, typeName string) (*pgtype.Type, error)
-	TypeMap() *pgtype.Map
 }
 
 type DB struct {
@@ -36,12 +35,17 @@ func new(db DBTX, redis valkey.Client) (*DB, error) {
         "_{{.Name}}",
         {{- end }}
     }
+    c, errConn := db.Acquire(context.Background())
+    if errConn != nil {
+        return nil, errConn
+    }
+    defer c.Release()
     for _, pgxType := range pgxTypes {
-        loadType, err := db.LoadType(context.Background(), pgxType)
+        loadType, err := c.Conn().LoadType(context.Background(), pgxType)
         if err != nil {
             return nil, err
         }
-        db.TypeMap().RegisterType(loadType)
+        c.Conn().TypeMap().RegisterType(loadType)
     }
     {{- end }}
     return &DB{
