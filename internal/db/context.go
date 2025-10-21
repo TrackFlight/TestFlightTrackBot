@@ -2,14 +2,12 @@ package db
 
 import (
 	"bytes"
-	"context"
 	"embed"
 	"fmt"
 	"log"
 	"os/exec"
 
 	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
-	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 	"github.com/valkey-io/valkey-go"
@@ -43,18 +41,14 @@ func NewDB(cfg *config.Config) (*DB, error) {
 
 	_ = sqlConn.Close()
 
-	conn, err := pgxpool.New(context.Background(), dsn)
-	if err != nil {
-		return nil, err
-	}
-
 	redis, err := valkey.NewClient(valkey.ClientOption{
 		InitAddress: []string{"valkey:6379"},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("connect to valkey: %w", err)
 	}
-	return new(conn, redis)
+
+	return new(dsn, redis)
 }
 
 func ExecuteBackup(cfg *config.Config) ([]byte, error) {

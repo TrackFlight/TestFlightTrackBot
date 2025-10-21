@@ -27,7 +27,8 @@ type DB struct {
 {{- end }}
 }
 
-func new(db DBTX, redis valkey.Client) (*DB, error) {
+func new(dsn string, redis valkey.Client) (*DB, error) {
+    cfg, err := pgxpool.ParseConfig(dsn)
     {{- if gt (len .Enums) 0 }}
     pgxTypes := []string{
         {{- range .Enums }}
@@ -35,19 +36,24 @@ func new(db DBTX, redis valkey.Client) (*DB, error) {
         "_{{.Name}}",
         {{- end }}
     }
-    c, errConn := db.Acquire(context.Background())
-    if errConn != nil {
-        return nil, errConn
+    if err != nil {
+        return nil, err
     }
-    defer c.Release()
-    for _, pgxType := range pgxTypes {
-        loadType, err := c.Conn().LoadType(context.Background(), pgxType)
-        if err != nil {
-            return nil, err
-        }
-        c.Conn().TypeMap().RegisterType(loadType)
+    cfg.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
+    	for _, pgxType := range pgxTypes {
+    		loadType, errLoad := conn.LoadType(context.Background(), pgxType)
+    		if errLoad != nil {
+    			return err
+    		}
+    		conn.TypeMap().RegisterType(loadType)
+    	}
+    	return nil
     }
     {{- end }}
+    db, err := pgxpool.NewWithConfig(context.Background(), cfg)
+    if err != nil {
+        return nil, err
+    }
     return &DB{
         {{- range .Queries }}
         {{ . | ToPascalCase }}Store: &{{ . | ToPascalCase }}Store{db: db, redis: redis},
