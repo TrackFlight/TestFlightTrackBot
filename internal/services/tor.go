@@ -1,25 +1,17 @@
 package services
 
 import (
-	"context"
-	"time"
-
 	"github.com/Laky-64/gologging"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/tor"
+	"github.com/robfig/cron/v3"
 )
 
-func startTorRotate(ctx context.Context, t *tor.Client) {
-	ticker := time.NewTicker(15 * time.Minute)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
+func startTorRotate(c *cron.Cron, t *tor.Client) error {
+	_, err := c.AddFunc("*/15 * * * *", func() {
+		if err := t.Refresh(); err != nil {
+			gologging.ErrorF("tor refresh: %v", err)
 			return
-		case <-ticker.C:
-			if err := t.Refresh(); err != nil {
-				gologging.ErrorF("tor refresh: %v", err)
-				return
-			}
 		}
-	}
+	})
+	return err
 }

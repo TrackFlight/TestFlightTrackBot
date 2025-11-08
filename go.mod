@@ -11,6 +11,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/pressly/goose/v3 v3.26.0
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/valkey-io/valkey-go v1.0.67
 	golang.org/x/text v0.30.0
 )

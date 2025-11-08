@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,6 +12,7 @@ import (
 	"github.com/TrackFlight/TestFlightTrackBot/internal/services"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/bot"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/testflight"
+	"github.com/robfig/cron/v3"
 )
 
 func main() {
@@ -36,9 +36,9 @@ func main() {
 		gologging.Fatal(err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	services.StartAll(ctx, b, cfg, dbCtx, tfClient)
+	c := cron.New()
+	services.StartAll(c, b, cfg, dbCtx, tfClient)
+	defer c.Stop()
 
 	api.Start(dbCtx, cfg)
 
