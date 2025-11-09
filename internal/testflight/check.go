@@ -40,7 +40,6 @@ func (c *Client) Check(links []db.GetUsedLinksLinkRow) (map[string]Result, error
 			for i := 0; i < 3; i++ {
 				res, err := transaction.ExecuteRequest(
 					link.URL,
-					pickRandomUserAgent(c.userAgents),
 				)
 				mu.Lock()
 				if err != nil {

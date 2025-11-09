@@ -14,6 +14,12 @@ type RequestTransaction struct {
 
 func (c *Client) NewTransaction(numRequests int) (*RequestTransaction, error) {
 	c.mutex.Lock()
+	if c.userAgents == nil {
+		if err := c.loadUserAgents(); err != nil {
+			return nil, err
+		}
+	}
+
 	neededInstances := int(math.Max(math.Floor(float64(numRequests/MaxRequestsPerInstance)), 1))
 	deltaInstances := neededInstances - len(c.instances)
 	if deltaInstances > 0 {

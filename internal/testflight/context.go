@@ -3,18 +3,11 @@ package testflight
 import "github.com/TrackFlight/TestFlightTrackBot/internal/tor"
 
 type Client struct {
-	userAgents []string
-	TorClient  *tor.Client
+	TorClient *tor.Client
 }
 
 func NewClient() (*Client, error) {
-	agents, err := loadUserAgents()
-	if err != nil {
-		return nil, err
-	}
-
 	return &Client{
-		userAgents: agents,
-		TorClient:  &tor.Client{},
+		TorClient: &tor.Client{},
 	}, nil
 }

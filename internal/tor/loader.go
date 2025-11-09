@@ -1,18 +1,17 @@
-package testflight
+package tor
 
 import (
 	"bufio"
 	"bytes"
 	"encoding/json"
-	"math/rand"
 
 	"github.com/Laky-64/http"
 )
 
-func loadUserAgents() ([]string, error) {
+func (c *Client) loadUserAgents() error {
 	request, err := http.ExecuteRequest(UserAgentListURL)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	var userAgents []string
@@ -23,9 +22,6 @@ func loadUserAgents() ([]string, error) {
 			userAgents = append(userAgents, userAgent.UserAgent)
 		}
 	}
-	return userAgents, scanner.Err()
-}
-
-func pickRandomUserAgent(userAgents []string) string {
-	return userAgents[rand.Intn(len(userAgents))]
+	c.userAgents = userAgents
+	return scanner.Err()
 }
