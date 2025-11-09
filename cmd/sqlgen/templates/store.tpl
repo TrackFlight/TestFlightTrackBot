@@ -10,15 +10,24 @@ import (
     "context"
 )
 
-{{$rawName := .StoreName | ToPascalCase -}}
-{{$name := printf "%sStore" $rawName -}}
+{{- $rawName := .StoreName | ToPascalCase}}
+{{- $name := printf "%sStore" $rawName}}
 type {{$name}} struct {
     db DBTX
     redis valkey.Client
 }
+{{- $sharedReturning := .SharedReturning}}
+{{ range $key, $value := $sharedReturning}}
+type {{$key | ToPascalCase | Singular}} struct {
+{{- range $value -}}
+    {{.Name | ToPascalCase | ToGoCase}} {{ToGoType . true}} `json:"{{.Name}}{{if not .NotNull}},omitempty{{end}}"`
+{{end -}}
+}
+{{- end}}
 {{ range .Queries -}}
 {{- $isBulk := IsBulkQuery .}}
 {{- $queryOptions := GetQueryOptions .}}
+{{- $isSharedReturning := index $sharedReturning $queryOptions.Returning}}
 {{- $filteredColumns := FilterColumnsByKeys .Columns $queryOptions.Exclude -}}
 {{- $hasResults := gt (len $filteredColumns) 0 -}}
 {{- $cacheOptions := $queryOptions.Cache}}
@@ -73,12 +82,13 @@ type {{$bulkParamsName}} struct {
 {{- end}}
 }
 {{- end}}
-{{- if gt (len $filteredColumns) 1 }}
+{{- if $isSharedReturning }}
+{{- $returnName = $queryOptions.Returning | ToPascalCase | Singular -}}
+{{- else if gt (len $filteredColumns) 1 }}
 {{- $checkCompatible = FindCompatible (index $filteredColumns 0).Table.Name .Columns}}
 {{- if gt (len $checkCompatible) 0 }}
 {{- $returnName = printf "models.%s" ($checkCompatible | ToPascalCase | Singular) -}}
 {{- else}}
-
 type {{$returnName}} struct {
 {{- range $filteredColumns }}
     {{.Name | ToPascalCase | ToGoCase}} {{ToGoType . true}} `json:"{{.Name}}{{if not .NotNull}},omitempty{{end}}"`
@@ -311,13 +321,13 @@ bulkParams []{{$bulkParamsName}}
     {{- else if eq .Cmd ":one"}}
     errScan := row.Scan(
     {{- end}}
-    {{- if gt (len .Columns) 1}}
+    {{- if or (gt (len .Columns) 1) $isSharedReturning}}
     {{- range .Columns}}
     {{- if and $isCacheKeyDummy (eq ($cacheOptions.Key | Singular) .Name)}}
     &itemVersion,
     {{- else if and $allowedDummy (contains $queryOptions.Exclude .Name)}}
     &dummy,
-    {{- else if eq (len $filteredColumns) 1}}
+    {{- else if and (eq (len $filteredColumns) 1) (not $isSharedReturning) }}
     &{{$tmpVarName}},
     {{- else}}
     &{{$tmpVarName}}.{{.Name | ToPascalCase | ToGoCase}},

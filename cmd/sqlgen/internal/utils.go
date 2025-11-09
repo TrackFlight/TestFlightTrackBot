@@ -203,6 +203,36 @@ func DetectImports(columns []Column, isExternal bool) []string {
 	return list
 }
 
+func DetectSharedReturning(queries []Query) map[string][]Column {
+	mapping := make(map[string][]Column)
+	for _, query := range queries {
+		options := GetQueryOptions(&query)
+		if len(options.Returning) == 0 {
+			continue
+		}
+		if _, exists := mapping[options.Returning]; exists {
+			for _, queryCol := range query.Columns {
+				found := false
+				for _, col := range mapping[options.Returning] {
+					if col.Name == queryCol.Name {
+						if col.Type.Name != queryCol.Type.Name {
+							gologging.Fatal("Conflict in returning mapping for " + options.Returning + ": column " + col.Name + " has different types: " + col.Type.Name + " and " + queryCol.Type.Name)
+						}
+						found = true
+						break
+					}
+				}
+				if !found {
+					mapping[options.Returning] = append(mapping[options.Returning], queryCol)
+				}
+			}
+			continue
+		}
+		mapping[options.Returning] = query.Columns
+	}
+	return mapping
+}
+
 func Singular(s string) string {
 	switch {
 	case strings.HasSuffix(s, "ves") && len(s) > 3:
@@ -360,6 +390,8 @@ func GetQueryOptions(query *Query) *QueryOptions {
 			if len(options.Exclude) > len(query.Columns) {
 				gologging.FatalF("exclude options must have the same number of fields as columns in query %s", query.Name)
 			}
+		case "returning":
+			options.Returning = strings.TrimSpace(commentData[1])
 		}
 	}
 	return options

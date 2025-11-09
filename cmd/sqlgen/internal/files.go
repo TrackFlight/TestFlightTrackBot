@@ -44,9 +44,10 @@ func GenerateStoreFile(schema Schema, config SQLCConfig, t *template.Template, o
 		filename := storeName + "_store_gen.go"
 		outPath := filepath.Join(outDir, filename)
 		writeTemplateFile(outPath, t, map[string]any{
-			"StoreName": storeName,
-			"Queries":   queries,
-			"Imports":   DetectQueryImports(schema.Tables, queries),
+			"StoreName":       storeName,
+			"Queries":         queries,
+			"Imports":         DetectQueryImports(schema.Tables, queries),
+			"SharedReturning": DetectSharedReturning(queries),
 		})
 	}
 }

@@ -56,9 +56,10 @@ type Column struct {
 }
 
 type QueryOptions struct {
-	Cache   CacheOptions
-	Order   []string
-	Exclude []string
+	Cache     CacheOptions
+	Order     []string
+	Exclude   []string
+	Returning string
 }
 
 type CacheOptions struct {
