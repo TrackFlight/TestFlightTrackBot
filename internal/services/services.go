@@ -33,4 +33,7 @@ func StartAll(
 	if err := startDbBackup(c, b, cfg); err != nil {
 		gologging.FatalF("start db backup service: %v", err)
 	}
+	if err := startWeeklyHighLights(c, rateLimit, b, cfg, dbCtx, tfClient.TorClient); err != nil {
+		gologging.FatalF("start weekly highlights service: %v", err)
+	}
 }

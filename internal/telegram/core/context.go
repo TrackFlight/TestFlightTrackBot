@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/GoBotApiOfficial/gobotapi"
 	"github.com/GoBotApiOfficial/gobotapi/methods"
+	rawTypes "github.com/GoBotApiOfficial/gobotapi/types/raw"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/tor"
@@ -45,4 +46,16 @@ func (ctx *UpdateContext) SendMessageWithKeyboard(chatID int64, text string, rep
 		},
 	)
 	return err
+}
+
+func (ctx *UpdateContext) SendPhotoWithKeyboard(chatID int64, text string, photo rawTypes.InputFile, replyMarkup interface{}) (*rawTypes.Result, error) {
+	return ctx.Api.Invoke(
+		&methods.SendPhoto{
+			ChatID:      chatID,
+			Caption:     text,
+			Photo:       photo,
+			ParseMode:   "html",
+			ReplyMarkup: replyMarkup,
+		},
+	)
 }

@@ -123,6 +123,10 @@ WHERE chat_id = @chat_id
 AND link_id = ANY(@link_ids::bigint[]);
 
 
+-- name: GetAllUsers :many
+SELECT id, lang FROM chats;
+
+
 -- name: BulkUpdateNotifications :many
 WITH input_data AS (
     SELECT

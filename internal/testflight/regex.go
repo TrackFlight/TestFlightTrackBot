@@ -21,4 +21,7 @@ var (
 	RegexAwesomeTestFlight = regexp.MustCompile(
 		`(^|\n)\|\s*(.*?)\s*\|\s*\[(https?://testflight\.apple\.com/join/\w+)][^|]*\s*\|\s*([YFND])`,
 	)
+	RegexImageSize = regexp.MustCompile(
+		`\d+x\d+\w*-?\d*`,
+	)
 )

@@ -7,12 +7,16 @@ require (
 	github.com/Laky-64/gologging v1.1.0
 	github.com/Laky-64/http v1.0.8
 	github.com/cretz/bine v0.2.0
+	github.com/disintegration/gift v1.2.1
+	github.com/fogleman/gg v1.3.0
 	github.com/go-chi/chi/v5 v5.2.3
 	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0
 	github.com/jackc/pgx/v5 v5.7.6
 	github.com/pressly/goose/v3 v3.26.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/valkey-io/valkey-go v1.0.67
+	golang.org/x/image v0.32.0
 	golang.org/x/text v0.30.0
 )
 
