@@ -1,9 +1,13 @@
 package translator
 
 import (
+	"fmt"
 	"maps"
 	"os"
 	"slices"
+
+	"golang.org/x/text/feature/plural"
+	"golang.org/x/text/language"
 )
 
 type Translator struct {
@@ -19,11 +23,37 @@ func New(language string) *Translator {
 	}
 }
 
+func (t *Translator) Language() string {
+	return t.language
+}
+
 func (t *Translator) T(key Key) string {
 	return t.TWithData(key, nil)
 }
 
 func (t *Translator) TWithData(key Key, values map[string]string) string {
+	tmpl, ok := langPacks[t.language][key]
+	if !ok {
+		tmpl = langPacks[DefaultLanguage][key]
+	}
+	return RegexPlaceholder.ReplaceAllStringFunc(tmpl, func(match string) string {
+		parts := RegexPlaceholder.FindStringSubmatch(match)
+		subKey := parts[1]
+		if val, exists := values[subKey]; exists {
+			return val
+		}
+		return parts[0]
+	})
+}
+
+func (t *Translator) TWithDataCountable(key Key, values map[string]string, count int) string {
+	firstCheckKey := Key(fmt.Sprintf("%s_%s", key, pluralCategory(t.language, count)))
+	otherCheckKey := Key(fmt.Sprintf("%s_OTHER", key))
+	if _, ok := langPacks[t.language][firstCheckKey]; ok {
+		key = firstCheckKey
+	} else if _, ok = langPacks[t.language][otherCheckKey]; ok {
+		key = otherCheckKey
+	}
 	tmpl, ok := langPacks[t.language][key]
 	if !ok {
 		tmpl = langPacks[DefaultLanguage][key]
@@ -66,6 +96,25 @@ func IsSupported(lang string) bool {
 		return true
 	}
 	return false
+}
+
+func pluralCategory(langCode string, count int) string {
+	tag := language.Make(langCode)
+	form := plural.Cardinal.MatchPlural(tag, count, 0, 0, 0, 0)
+	switch form {
+	case plural.Zero:
+		return "ZERO"
+	case plural.One:
+		return "ONE"
+	case plural.Two:
+		return "TWO"
+	case plural.Few:
+		return "FEW"
+	case plural.Many:
+		return "MANY"
+	default:
+		return "OTHER"
+	}
 }
 
 func extractLang(path string) (langTag string) {
