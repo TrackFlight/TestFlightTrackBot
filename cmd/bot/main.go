@@ -38,6 +38,7 @@ func main() {
 
 	c := cron.New()
 	services.StartAll(c, b, cfg, dbCtx, tfClient)
+	c.Start()
 	defer c.Stop()
 
 	api.Start(dbCtx, cfg)
