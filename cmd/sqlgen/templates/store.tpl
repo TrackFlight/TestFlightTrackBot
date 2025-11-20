@@ -209,9 +209,8 @@ bulkParams []{{$bulkParamsName}}
     if errVer == nil {
         var validList []{{$versionType}}
         for idx, vMapID := range vMapIDs {
-        	if vMap[vMapID] != verRes[idx] && verRes[idx] != 0 {
+        	if vMap[vMapID] == verRes[idx] {
             	validList = append(validList, vMapID)
-            	break
             }
         }
         {{$filteredSplitCacheName}} = []{{ToGoType $cacheOptions.KeyColumn true}}{}
@@ -219,11 +218,21 @@ bulkParams []{{$bulkParamsName}}
     var {{$filteredSplitCacheName}} []{{ToGoType $cacheOptions.KeyColumn true}}
     {{- end}}
     for idx, r := range res{{if $allowedVersioning}}[:len(res)-1]{{end}} {
-    	if r.Error() == nil{{if $allowedVersioning}} && slices.Contains(validList, {{$cacheOptions.Key | ToCamelCase}}[idx]){{end}} {
+    	if r.Error() == nil {
     		var item {{if $isManyGet}}[]{{end}}{{$returnName}}
     		if err := r.DecodeJSON(&item); err == nil {
-    			i = append(i, item{{if $isManyGet}}...{{end}})
-    			continue
+    		    {{- if and $isManyGet $allowedVersioning}}
+    		    allOk := true
+    		    for _, it := range item {
+    		        allOk = allOk && slices.Contains(validList, it.{{$fieldName}})
+        	    }
+        	    if allOk {
+        	    {{- end}}
+        	       i = append(i, item{{if $isManyGet}}...{{end}})
+                   continue
+                {{- if and $isManyGet $allowedVersioning}}
+        	    }
+        	    {{- end}}
     		}
     	}
     	{{$filteredSplitCacheName}} = append({{$filteredSplitCacheName}}, {{$cacheOptions.Key | ToCamelCase}}[idx])
