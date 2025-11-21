@@ -23,9 +23,9 @@ func (e *{{ $name }}) Scan(value interface{}) error {
     }
     switch s := value.(type) {
 	case []byte:
-		*e = LinkStatusEnum(s)
+		*e = {{ $name }}(s)
 	case string:
-		*e = LinkStatusEnum(s)
+		*e = {{ $name }}(s)
 	}
     return nil
 }
