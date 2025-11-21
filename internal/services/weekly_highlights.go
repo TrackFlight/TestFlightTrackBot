@@ -55,6 +55,10 @@ func startWeeklyHighLights(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bo
 			gologging.ErrorF("weekly highlights %s: %v", eventName, err)
 			return
 		}
+		mappedInfo := make(map[int64]db.GetAppsInfoAppRow)
+		for _, app := range info {
+			mappedInfo[app.EntityID] = app
+		}
 
 		transaction, err := torClient.NewTransaction(len(appIds))
 		if err != nil {
@@ -107,8 +111,8 @@ func startWeeklyHighLights(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bo
 		}
 
 		var orderedImages [][]byte
-		for _, app := range info {
-			orderedImages = append(orderedImages, images[app.IconURL.String])
+		for _, id := range appIds {
+			orderedImages = append(orderedImages, images[mappedInfo[id].IconURL.String])
 		}
 
 		users, err := dbCtx.PreferencesStore.GetAllNotifiableWeeklyInsightUsers()
@@ -151,7 +155,7 @@ func startWeeklyHighLights(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bo
 				sBuilder.WriteString("\n\n")
 
 				for i, weekAppInfo := range apps {
-					appInfo := info[i]
+					appInfo := mappedInfo[weekAppInfo.ID]
 					var tempSBuilder strings.Builder
 					tempSBuilder.WriteString("<i>")
 					tempSBuilder.WriteString(
