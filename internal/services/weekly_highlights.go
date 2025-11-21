@@ -118,7 +118,7 @@ func startWeeklyHighLights(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bo
 		}
 
 		languageBanners := make(map[string]rawTypes.InputFile)
-
+		languageText := make(map[string]string)
 		translatorEventName := strings.ToUpper(string(eventName))
 		eventTitleKey := translator.Key(fmt.Sprintf("EVENT_%s_TITLE", translatorEventName))
 		for _, user := range users {
@@ -138,35 +138,24 @@ func startWeeklyHighLights(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bo
 					Name: fmt.Sprintf("banner_%s.png", t.Language()),
 					Data: banner,
 				}
-			}
-		}
 
-		var wgMessages sync.WaitGroup
-		var unreachableChats []db.BulkUpdateNotifiableUsersChatParams
-		mutexByLang := make(map[string]*sync.Mutex)
-		for _, user := range users {
-			wg.Add(1)
-			rateLimit.Enqueue(func() {
-				defer wg.Done()
-				ctx := core.NewLightContext(b.Api, user.Lang)
-				lang := ctx.Translator.Language()
 				var sBuilder strings.Builder
-				sBuilder.WriteString(ctx.Translator.TWithData(
+				sBuilder.WriteString(t.TWithData(
 					translator.Key(fmt.Sprintf("EVENT_%s_TEXT_TITLE", translatorEventName)),
 					map[string]string{
-						"Title": ctx.Translator.T(eventTitleKey),
+						"Title": t.T(eventTitleKey),
 					},
 				))
 				sBuilder.WriteRune('\n')
-				sBuilder.WriteString(ctx.Translator.T(translator.Key(fmt.Sprintf("EVENT_%s_TEXT_DESCRIPTION", translatorEventName))))
+				sBuilder.WriteString(t.T(translator.Key(fmt.Sprintf("EVENT_%s_TEXT_DESCRIPTION", translatorEventName))))
 				sBuilder.WriteString("\n\n")
+
 				for i, weekAppInfo := range apps {
 					appInfo := info[i]
 					var tempSBuilder strings.Builder
-					_ = weekAppInfo
 					tempSBuilder.WriteString("<i>")
 					tempSBuilder.WriteString(
-						ctx.Translator.TWithDataCountable(
+						t.TWithDataCountable(
 							"APP_FOLLOWERS_AMOUNT",
 							map[string]string{
 								"Amount": strconv.Itoa(int(appInfo.Followers)),
@@ -182,15 +171,15 @@ func startWeeklyHighLights(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bo
 					var availability string
 					switch weekAppInfo.Status {
 					case models.LinkStatusEnumAvailable:
-						availability = ctx.Translator.T(
+						availability = t.T(
 							translator.StatusAvailable,
 						)
 					case models.LinkStatusEnumFull:
-						availability = ctx.Translator.T(
+						availability = t.T(
 							translator.StatusFull,
 						)
 					case models.LinkStatusEnumClosed:
-						availability = ctx.Translator.T(
+						availability = t.T(
 							translator.StatusClosed,
 						)
 					}
@@ -203,6 +192,21 @@ func startWeeklyHighLights(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bo
 						tempSBuilder.String(),
 					))
 				}
+				sBuilder.WriteString(t.T(translator.WeeklyInsightsFooter))
+
+				languageText[t.Language()] = sBuilder.String()
+			}
+		}
+
+		var wgMessages sync.WaitGroup
+		var unreachableChats []db.BulkUpdateNotifiableUsersChatParams
+		mutexByLang := make(map[string]*sync.Mutex)
+		for _, user := range users {
+			wg.Add(1)
+			rateLimit.Enqueue(func() {
+				defer wg.Done()
+				ctx := core.NewLightContext(b.Api, user.Lang)
+				lang := ctx.Translator.Language()
 				mu.Lock()
 				if _, ok := mutexByLang[lang]; !ok {
 					mutexByLang[lang] = &sync.Mutex{}
@@ -217,7 +221,7 @@ func startWeeklyHighLights(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bo
 				}
 				update, err2 := ctx.SendPhotoWithKeyboard(
 					user.ID,
-					sBuilder.String(),
+					languageText[lang],
 					banner,
 					&types.InlineKeyboardMarkup{
 						InlineKeyboard: [][]types.InlineKeyboardButton{

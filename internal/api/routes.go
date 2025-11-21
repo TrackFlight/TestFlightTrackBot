@@ -53,6 +53,9 @@ func Start(dbCtx *db.DB, cfg *config.Config) {
 					)
 
 					internal.Patch("/links/{id}", handlers.EditLinkSettings(dbCtx, cfg))
+
+					internal.Get("/preferences", handlers.GetSettingsPreferences(dbCtx))
+					internal.Patch("/preferences", handlers.EditSettingsPreferences(dbCtx))
 				})
 			})
 
