@@ -16,6 +16,7 @@ import (
 	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/db/models"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/graphics"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/bot"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/core"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/testflight"
@@ -110,7 +111,7 @@ func startWeeklyHighLights(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bo
 			orderedImages = append(orderedImages, images[app.IconURL.String])
 		}
 
-		users, err := dbCtx.ChatStore.GetAllUsers()
+		users, err := dbCtx.PreferencesStore.GetAllNotifiableWeeklyInsightUsers()
 		if err != nil {
 			gologging.ErrorF("weekly highlights get users: %v", err)
 			return
@@ -141,6 +142,7 @@ func startWeeklyHighLights(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bo
 		}
 
 		var wgMessages sync.WaitGroup
+		var unreachableChats []db.BulkUpdateNotifiableUsersChatParams
 		mutexByLang := make(map[string]*sync.Mutex)
 		for _, user := range users {
 			wg.Add(1)
@@ -243,6 +245,15 @@ func startWeeklyHighLights(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bo
 						languageBanners[lang] = types.InputURL(bestImage.FileID)
 						mu.Unlock()
 					}
+				} else {
+					mu.Lock()
+					if status := telegram.MapErrorToUserStatus(err2); status != models.UserStatusEnumReachable {
+						unreachableChats = append(unreachableChats, db.BulkUpdateNotifiableUsersChatParams{
+							ChatID: user.ID,
+							Status: status,
+						})
+					}
+					mu.Unlock()
 				}
 
 				if _, ok := banner.(types.InputBytes); ok {
@@ -251,6 +262,14 @@ func startWeeklyHighLights(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bo
 			})
 		}
 		wgMessages.Wait()
+
+		if len(unreachableChats) > 0 {
+			err = dbCtx.ChatStore.BulkUpdateNotifiableUsers(unreachableChats)
+			if err != nil {
+				gologging.ErrorF("bulk update unreachable chats: %v", err)
+				return
+			}
+		}
 	})
 	return err
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/db/models"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/bot"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/core"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/testflight"
@@ -99,6 +100,8 @@ func startTestflight(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bot, cfg
 				return
 			}
 			var wg sync.WaitGroup
+			var mu sync.Mutex
+			var unreachableChats []db.BulkUpdateNotifiableUsersChatParams
 			for _, n := range notifications {
 				wg.Add(1)
 				rateLimit.Enqueue(func() {
@@ -121,7 +124,7 @@ func startTestflight(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bot, cfg
 					} else {
 						messageKey = translator.BetaClosed
 					}
-					_ = updateContext.SendMessageWithKeyboard(
+					errSend := updateContext.SendMessageWithKeyboard(
 						n.ChatID,
 						updateContext.Translator.TWithData(
 							messageKey,
@@ -131,9 +134,27 @@ func startTestflight(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bot, cfg
 						),
 						keyboard,
 					)
+					if errSend != nil {
+						mu.Lock()
+						if status := telegram.MapErrorToUserStatus(errSend); status != models.UserStatusEnumReachable {
+							unreachableChats = append(unreachableChats, db.BulkUpdateNotifiableUsersChatParams{
+								ChatID: n.ChatID,
+								Status: status,
+							})
+						}
+						mu.Unlock()
+					}
 				})
 			}
 			wg.Wait()
+
+			if len(unreachableChats) > 0 {
+				err = dbCtx.ChatStore.BulkUpdateNotifiableUsers(unreachableChats)
+				if err != nil {
+					gologging.ErrorF("bulk update unreachable chats: %v", err)
+					return
+				}
+			}
 		}
 		if len(removeLinks) > 0 {
 			notifications, err := dbCtx.LinkStore.BulkDelete(removeLinks)

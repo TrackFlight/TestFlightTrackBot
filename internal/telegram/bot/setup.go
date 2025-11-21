@@ -1,7 +1,10 @@
 package bot
 
 import (
+	"github.com/GoBotApiOfficial/gobotapi"
 	"github.com/GoBotApiOfficial/gobotapi/filters"
+	"github.com/GoBotApiOfficial/gobotapi/types"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/db/models"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/handlers"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/handlers/admin"
@@ -49,4 +52,17 @@ func (b *Bot) setupHandlers() {
 		filters.Private(),
 		IsBackupFile(),
 	)
+
+	b.Api.OnMyChatMember(func(client *gobotapi.Client, update types.ChatMemberUpdated) {
+		var status models.UserStatusEnum
+		switch update.NewChatMember.Kind() {
+		case types.TypeChatMemberBanned:
+			status = models.UserStatusEnumBlockedByUser
+		case types.TypeChatMemberRestricted, types.TypeChatMemberLeft:
+			status = models.UserStatusEnumDeletedAccount
+		default:
+			status = models.UserStatusEnumReachable
+		}
+		_ = b.db.ChatStore.UpdateNotifiableUser(update.Chat.ID, status)
+	})
 }

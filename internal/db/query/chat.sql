@@ -123,8 +123,25 @@ WHERE chat_id = @chat_id
 AND link_id = ANY(@link_ids::bigint[]);
 
 
--- name: GetAllUsers :many
-SELECT id, lang FROM chats;
+-- name: BulkUpdateNotifiableUsers :exec
+WITH input_data AS (
+    SELECT
+        UNNEST(@chat_ids::bigint[]) AS chat_id,
+        UNNEST(@statuses::user_status_enum[]) AS status
+)
+UPDATE chats c
+SET status = i.status, updated_at = NOW()
+FROM input_data i
+WHERE c.id = i.chat_id
+AND c.status IS DISTINCT FROM i.status;
+
+
+-- name: UpdateNotifiableUser :exec
+-- order: chat_id, status
+UPDATE chats
+SET status = @status::user_status_enum, updated_at = NOW()
+WHERE id = @chat_id::bigint
+AND status IS DISTINCT FROM @status::user_status_enum;
 
 
 -- name: BulkUpdateNotifications :many
@@ -139,15 +156,18 @@ ranked_links AS (
         ROW_NUMBER() OVER (PARTITION BY cl.chat_id ORDER BY cl.created_at) AS rn,
         cl.link_id,
         cl.chat_id,
+        c.lang,
         cl.last_notified_version,
         cl.notify_available,
         cl.notify_closed
     FROM chat_links cl
+    JOIN chats c ON c.id = cl.chat_id AND c.status = 'reachable'
     WHERE cl.notify_available OR cl.notify_closed
 ),
 candidates AS (
     SELECT
         rl.chat_id,
+        rl.lang,
         rl.link_id,
         i.version,
         i.status
@@ -170,15 +190,14 @@ notified AS (
     SET last_notified_version = fc.version, updated_at = NOW()
     FROM candidates fc
     WHERE cl.link_id = fc.link_id AND cl.chat_id = fc.chat_id
-    RETURNING cl.chat_id, cl.link_id, fc.status
+    RETURNING fc.lang, cl.chat_id, cl.link_id, fc.status
 )
 SELECT
-    c.id AS chat_id,
-    c.lang,
+    notified.chat_id,
+    notified.lang,
     a.app_name,
     l.url AS link_url,
     notified.status::link_status_enum AS status
 FROM notified
 JOIN links l ON l.id = notified.link_id
-JOIN chats c ON c.id = notified.chat_id
 JOIN apps a ON a.id = l.app_id;
