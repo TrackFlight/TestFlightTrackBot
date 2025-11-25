@@ -16,6 +16,7 @@ func GetBotStats(ctx *core.UpdateContext, message types.Message) error {
 	}
 	statsMessage := "<b>🤖 Bot Statistics:</b>\n" +
 		" ├ 👤 <b>Users:</b> <code>" + fmt.Sprintf("%d/%d", stats.ActiveChats, stats.TotalChats) + "</code>\n" +
+		" ├ ⛔️ <b>Blocked Chats:</b> <code>" + strconv.Itoa(int(stats.BlockedChats)) + "</code>\n" +
 		" ├ 🔗 <b>Links:</b> <code>" + fmt.Sprintf("%d/%d", stats.TrackedLinks, stats.TotalLinks) + "</code>\n" +
 		" ╰ 🧅 <b>TOR Instances:</b> <code>" + strconv.Itoa(ctx.TorClient.InstanceCount()) + "</code>\n"
 	return ctx.SendMessageWithKeyboard(
