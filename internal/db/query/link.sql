@@ -11,6 +11,8 @@ SELECT
     END AS is_public
 FROM links
 JOIN chat_links ON chat_links.link_id = links.id
+JOIN chats ON chats.id = chat_links.chat_id
+WHERE chats.status = 'reachable'
 GROUP BY links.id, links.url, links.app_id, links.status;
 
 

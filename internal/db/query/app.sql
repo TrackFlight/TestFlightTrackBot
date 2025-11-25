@@ -163,7 +163,8 @@ app_follower_counts AS (
             SELECT COUNT(DISTINCT cl.chat_id)
             FROM links l
             JOIN chat_links cl ON cl.link_id = l.id
-            WHERE l.app_id = apps.id
+            JOIN chats ON chats.id = cl.chat_id
+            WHERE l.app_id = apps.id AND chats.status = 'reachable'
         ) AS followers
     FROM apps
     JOIN app_ids ON app_ids.id = apps.id
