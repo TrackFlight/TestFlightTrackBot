@@ -143,6 +143,7 @@ bulkParams []{{$bulkParamsName}}
     }
     defer tx.Rollback(context.Background())
     totalSize := len({{- if not $isSingleBulk }}bulkParams{{else}}{{(index $arraysList 0).Name | ToCamelCase}}{{end}})
+    noRows := false
     for start := 0; start < totalSize; start += batchMaxSize {
         end := start + batchMaxSize
         if end > totalSize {
@@ -400,7 +401,7 @@ bulkParams []{{$bulkParamsName}}
             return errScan
         }
         if tag.RowsAffected() == 0 {
-            return pgx.ErrNoRows
+            {{ if $isBulk }}noRows = true{{else}}return pgx.ErrNoRows{{end}}
         }
     {{- end}}
     {{- if $allowedGetCache}}
@@ -511,6 +512,11 @@ bulkParams []{{$bulkParamsName}}
     {{- end}}
     {{- end}}
     {{- if $allowedSplitCacheSave}}
+    }
+    {{- end}}
+    {{- if $isBulk }}
+    if noRows {
+        return {{ if and (not (eq .Cmd ":exec")) $hasResults -}}nil, {{end}}pgx.ErrNoRows
     }
     {{- end}}
     return {{ if and (not (eq .Cmd ":exec")) $hasResults -}}{{if $allowPointer -}}&{{- end -}}i, {{end}}nil
