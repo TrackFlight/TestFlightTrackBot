@@ -199,8 +199,8 @@ updated AS (
     UPDATE apps AS a
     SET
         app_name    = i.app_name,
-        icon_url    = NULLIF(i.icon_url, ''),
-        description = NULLIF(i.description, ''),
+        icon_url    = COALESCE(NULLIF(i.icon_url, ''), a.icon_url),
+        description = COALESCE(NULLIF(i.description, ''), a.description),
         updated_at  = NOW()
     FROM input_data AS i
     WHERE a.app_name = i.app_name OR a.id = i.app_id
