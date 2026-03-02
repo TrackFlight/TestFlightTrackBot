@@ -17,7 +17,7 @@ services:
       SERVER_NAME: ${SERVER_NAME_DEV}
 
   mini-app-dev:
-    image: node:24-alpine3.22
+    image: node:25-alpine3.22
     container_name: mini-app-dev
     working_dir: /app
     volumes:
