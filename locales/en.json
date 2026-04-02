@@ -10,6 +10,7 @@
   "BETA_CLOSED": "❌ \u003cb\u003eTestFlight beta for {{.AppName}} is now closed!\u003c/b\u003e\nThank you for your interest! Stay tuned for future updates and new beta opportunities.\n\n\u003ci\u003eFeel free to track another app!\u003c/i\u003e",
   "BETA_OPENED": "🟢 \u003cb\u003eTestFlight beta for {{.AppName}} is now open!\u003c/b\u003e\nAccess the official beta to explore upcoming features, submit feedback, and stay ahead of the curve.\n\n👉 \u003ci\u003eTap the button below to join.\u003c/i\u003e",
   "CLOSE_BTN": "🗑 Close",
+  "COPIED_LINK": "Invite link copied to clipboard.",
   "DESCRIPTION_MORE_BUTTON": "more",
   "DONE_BTN": "Done",
   "EDIT_BTN": "Edit",
