@@ -21,6 +21,18 @@ func (b *Bot) setupHandlers() {
 		"close",
 		handlers.Close,
 	)
+	b.OnCallbackQuery(
+		"mute:",
+		handlers.Mute,
+	)
+	b.OnCallbackQuery(
+		"mute_y:",
+		handlers.MuteConfirm,
+	)
+	b.OnCallbackQuery(
+		"mute_n:",
+		handlers.MuteCancel,
+	)
 
 	// Translator commands
 	b.OnAdminMessage(

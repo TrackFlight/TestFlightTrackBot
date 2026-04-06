@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"maps"
 	"slices"
 	"strings"
@@ -117,6 +118,10 @@ func startTestflight(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bot, cfg
 					}
 					if n.Status == models.LinkStatusEnumAvailable {
 						messageKey = translator.BetaOpened
+						muteBtn := types.InlineKeyboardButton{
+							Text:         updateContext.Translator.T(translator.MuteNotificationsBtn),
+							CallbackData: fmt.Sprintf("mute:o:%d:%s", n.LinkID, linkCode),
+						}
 						keyboard = &types.InlineKeyboardMarkup{
 							InlineKeyboard: [][]types.InlineKeyboardButton{
 								{
@@ -124,11 +129,21 @@ func startTestflight(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bot, cfg
 										Text: updateContext.Translator.T(translator.JoinBetaBtn),
 										URL:  n.LinkURL,
 									},
+									muteBtn,
 								},
 							},
 						}
 					} else {
 						messageKey = translator.BetaClosed
+						muteBtn := types.InlineKeyboardButton{
+							Text:         updateContext.Translator.T(translator.MuteNotificationsBtn),
+							CallbackData: fmt.Sprintf("mute:c:%d:%s", n.LinkID, linkCode),
+						}
+						keyboard = &types.InlineKeyboardMarkup{
+							InlineKeyboard: [][]types.InlineKeyboardButton{
+								{muteBtn},
+							},
+						}
 					}
 					errSend := updateContext.SendMessageWithKeyboard(
 						n.ChatID,

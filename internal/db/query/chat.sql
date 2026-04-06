@@ -197,6 +197,7 @@ SELECT
     notified.lang,
     a.app_name,
     l.url AS link_url,
+    notified.link_id,
     notified.status::link_status_enum AS status
 FROM notified
 JOIN links l ON l.id = notified.link_id
