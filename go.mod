@@ -3,7 +3,7 @@ module github.com/TrackFlight/TestFlightTrackBot
 go 1.25.0
 
 require (
-	github.com/GoBotApiOfficial/gobotapi v1.10.3
+	github.com/GoBotApiOfficial/gobotapi v1.10.5
 	github.com/Laky-64/gologging v1.1.0
 	github.com/Laky-64/http v1.0.8
 	github.com/cretz/bine v0.2.0

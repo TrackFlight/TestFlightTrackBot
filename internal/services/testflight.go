@@ -2,14 +2,12 @@ package services
 
 import (
 	"errors"
-	"fmt"
 	"maps"
 	"slices"
 	"strings"
 	"sync"
 	"unicode"
 
-	"github.com/GoBotApiOfficial/gobotapi/types"
 	"github.com/Laky-64/gologging"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/config"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/db"
@@ -111,40 +109,17 @@ func startTestflight(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bot, cfg
 					defer wg.Done()
 					updateContext := core.NewLightContext(b.Api, n.Lang)
 					var messageKey translator.Key
-					var keyboard *types.InlineKeyboardMarkup
 					linkCode := n.LinkURL
 					if idx := strings.LastIndex(linkCode, "/"); idx != -1 {
 						linkCode = linkCode[idx+1:]
 					}
-					if n.Status == models.LinkStatusEnumAvailable {
+					opened := n.Status == models.LinkStatusEnumAvailable
+					if opened {
 						messageKey = translator.BetaOpened
-						muteBtn := types.InlineKeyboardButton{
-							Text:         updateContext.Translator.T(translator.MuteNotificationsBtn),
-							CallbackData: fmt.Sprintf("mute:o:%d:%s", n.LinkID, linkCode),
-						}
-						keyboard = &types.InlineKeyboardMarkup{
-							InlineKeyboard: [][]types.InlineKeyboardButton{
-								{
-									{
-										Text: updateContext.Translator.T(translator.JoinBetaBtn),
-										URL:  n.LinkURL,
-									},
-									muteBtn,
-								},
-							},
-						}
 					} else {
 						messageKey = translator.BetaClosed
-						muteBtn := types.InlineKeyboardButton{
-							Text:         updateContext.Translator.T(translator.MuteNotificationsBtn),
-							CallbackData: fmt.Sprintf("mute:c:%d:%s", n.LinkID, linkCode),
-						}
-						keyboard = &types.InlineKeyboardMarkup{
-							InlineKeyboard: [][]types.InlineKeyboardButton{
-								{muteBtn},
-							},
-						}
 					}
+					keyboard := telegram.NotificationKeyboard(updateContext.Translator, n.LinkID, n.LinkURL, opened)
 					errSend := updateContext.SendMessageWithKeyboard(
 						n.ChatID,
 						updateContext.Translator.TWithData(

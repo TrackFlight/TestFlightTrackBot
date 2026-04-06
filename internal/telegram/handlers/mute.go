@@ -7,6 +7,7 @@ import (
 
 	"github.com/GoBotApiOfficial/gobotapi/methods"
 	"github.com/GoBotApiOfficial/gobotapi/types"
+	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/telegram/core"
 	"github.com/TrackFlight/TestFlightTrackBot/internal/translator"
 )
@@ -25,12 +26,14 @@ func Mute(ctx *core.UpdateContext, cb types.CallbackQuery) error {
 			InlineKeyboard: [][]types.InlineKeyboardButton{
 				{
 					{
-						Text:         ctx.Translator.T(translator.MuteNotificationsConfirmBtn),
-						CallbackData: fmt.Sprintf("mute_y:%s", linkIdStr),
+						Text:              ctx.Translator.T(translator.MuteNotificationsConfirmBtn),
+						IconCustomEmojiID: telegram.MuteIconEmojiID,
+						CallbackData:      fmt.Sprintf("mute_y:%s", linkIdStr),
 					},
 					{
-						Text:         ctx.Translator.T(translator.MuteNotificationsCancelBtn),
-						CallbackData: fmt.Sprintf("mute_n:%s:%s:%s", notifType, linkIdStr, linkCode),
+						Text:              ctx.Translator.T(translator.MuteNotificationsCancelBtn),
+						IconCustomEmojiID: telegram.CrossIconEmojiID,
+						CallbackData:      fmt.Sprintf("mute_n:%s:%s:%s", notifType, linkIdStr, linkCode),
 					},
 				},
 			},
@@ -71,36 +74,17 @@ func MuteCancel(ctx *core.UpdateContext, cb types.CallbackQuery) error {
 	if len(parts) != 4 {
 		return nil
 	}
-	notifType, linkIdStr, linkCode := parts[1], parts[2], parts[3]
-	muteData := fmt.Sprintf("mute:%s:%s:%s", notifType, linkIdStr, linkCode)
-	muteBtn := types.InlineKeyboardButton{
-		Text:         ctx.Translator.T(translator.MuteNotificationsBtn),
-		CallbackData: muteData,
+	notifType, linkIdStr, link := parts[1], parts[2], parts[3]
+	linkID, err := strconv.ParseInt(linkIdStr, 10, 64)
+	if err != nil {
+		return nil
 	}
-	var rows [][]types.InlineKeyboardButton
-	if notifType == "o" {
-		linkURL := "https://testflight.apple.com/join/" + linkCode
-		rows = [][]types.InlineKeyboardButton{
-			{
-				{
-					Text: ctx.Translator.T(translator.JoinBetaBtn),
-					URL:  linkURL,
-				},
-				muteBtn,
-			},
-		}
-	} else {
-		rows = [][]types.InlineKeyboardButton{
-			{muteBtn},
-		}
-	}
+	keyboard := telegram.NotificationKeyboard(ctx.Translator, linkID, link, notifType == "o")
 	_, _ = ctx.Api.Invoke(&methods.AnswerCallbackQuery{CallbackQueryID: cb.ID})
 	_, _ = ctx.Api.Invoke(&methods.EditMessageReplyMarkup{
-		ChatID:    cb.Message.Chat.ID,
-		MessageID: cb.Message.MessageID,
-		ReplyMarkup: &types.InlineKeyboardMarkup{
-			InlineKeyboard: rows,
-		},
+		ChatID:      cb.Message.Chat.ID,
+		MessageID:   cb.Message.MessageID,
+		ReplyMarkup: keyboard,
 	})
 	return nil
 }
