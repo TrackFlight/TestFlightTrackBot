@@ -4,7 +4,9 @@ import (
 	"errors"
 	"maps"
 	"slices"
+	"strings"
 	"sync"
+	"unicode"
 
 	"github.com/GoBotApiOfficial/gobotapi/types"
 	"github.com/Laky-64/gologging"
@@ -109,6 +111,10 @@ func startTestflight(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bot, cfg
 					updateContext := core.NewLightContext(b.Api, n.Lang)
 					var messageKey translator.Key
 					var keyboard *types.InlineKeyboardMarkup
+					linkCode := n.LinkURL
+					if idx := strings.LastIndex(linkCode, "/"); idx != -1 {
+						linkCode = linkCode[idx+1:]
+					}
 					if n.Status == models.LinkStatusEnumAvailable {
 						messageKey = translator.BetaOpened
 						keyboard = &types.InlineKeyboardMarkup{
@@ -129,7 +135,9 @@ func startTestflight(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bot, cfg
 						updateContext.Translator.TWithData(
 							messageKey,
 							map[string]string{
-								"AppName": n.AppName,
+								"AppName":    n.AppName,
+								"AppHashtag": toHashtag(n.AppName),
+								"LinkCode":   linkCode,
 							},
 						),
 						keyboard,
@@ -183,4 +191,14 @@ func startTestflight(c *cron.Cron, rateLimit *utils.RateLimiter, b *bot.Bot, cfg
 		}
 	})
 	return err
+}
+
+func toHashtag(name string) string {
+	var b strings.Builder
+	for _, r := range name {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
 }
