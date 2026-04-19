@@ -109,5 +109,5 @@
   "UNDO_BTN": "Undo",
   "UNKNOWN_APP": "Unknown App",
   "UNKNOWN_ERROR": "‼️ \u003cb\u003eUnknown Error\u003c/b\u003e\nAn unexpected issue occurred while processing your request. Please try again later or contact support.",
-  "WEEKLY_INSIGHTS_FOOTER": "\u003ci\u003e\u003cb\u003e✨\u003c/b\u003e You can disable these weekly highlights anytime from Settings\u003c/i\u003e"
+  "WEEKLY_INSIGHTS_FOOTER": "\u003ci\u003e\u003ctg-emoji emoji-id=\"4999015678238262018\"\u003e✨\u003c/tg-emoji\u003e You can disable these weekly highlights anytime from Settings\u003c/i\u003e"
 }
